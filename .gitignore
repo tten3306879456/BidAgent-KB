@@ -37,3 +37,6 @@ desktop.ini
 # Temporary files
 *.tmp
 *.bak
+
+# WorkBuddy workspace data (user-specific, not version controlled)
+.workbuddy/
