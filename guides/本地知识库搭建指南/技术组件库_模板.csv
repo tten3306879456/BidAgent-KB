@@ -1,0 +1,11 @@
+﻿组件编号,组件名称,组件类型,功能描述,技术栈,部署方式,成熟度,使用项目数,文档路径,维护人,版本,接口协议,依赖组件,性能指标,备注
+TC-001,统一身份认证组件,基础组件,支持SSO/OAuth2/SAML/CAS多种认证协议，含用户管理/权限管理/审计日志,Spring Security/Redis/JWT,独立部署/Docker,生产级,5,06_技术方案知识库/组件文档/TC-001_统一认证.docx,王强,v2.3,RESTful API,Redis/MySQL,支持8000并发/响应<100ms,已在多个政务项目验证
+TC-002,数据交换共享组件,基础组件,支持多源数据采集/转换/清洗/共享，含数据目录/权限管控/血缘追踪,Spring Boot/Kafka/ElasticSearch,微服务部署,生产级,3,06_技术方案知识库/组件文档/TC-002_数据交换.docx,李明,v1.8,RESTful+Kafka,Zookeeper/Kafka,日处理10亿条/延迟<50ms,核心资产组件
+TC-003,工作流引擎组件,基础组件,基于BPMN 2.0的工作流引擎，支持可视化设计/条件分支/会签/退回,Camunda/Spring Boot,独立部署,生产级,4,06_技术方案知识库/组件文档/TC-003_工作流引擎.docx,张伟,v3.1,RESTful API,PostgreSQL/Camunda,支持10万流程实例/天,集成表单设计器
+TC-004,规则引擎组件,基础组件,基于Drools的业务规则引擎，支持规则可视化配置/动态加载/版本管理,Drools/Spring Boot,微服务部署,生产级,2,06_技术方案知识库/组件文档/TC-004_规则引擎.docx,陈杰,v1.5,RESTful API,Kie Workbench,1万规则/秒级响应,适用于一网统管/风控场景
+TC-005,消息通知组件,通用组件,支持短信/邮件/微信/站内信多通道消息推送，含模板管理/发送策略/失败重试,Spring Boot/RabbitMQ,微服务部署,生产级,6,06_技术方案知识库/组件文档/TC-005_消息通知.docx,赵芳,v2.0,RESTful API,RabbitMQ/Redis,5000条/秒,使用最广泛的通用组件
+TC-006,文件存储管理组件,基础组件,支持文件上传/下载/预览/版本管理/权限控制，兼容S3协议,MinIO/Spring Boot,独立部署,生产级,4,06_技术方案知识库/组件文档/TC-006_文件存储.docx,刘洋,v1.9,S3 API/RESTful,MinIO,单节点10TB/支持集群,兼容S3协议可替换为云存储
+TC-007,数据可视化组件,通用组件,基于ECharts的数据可视化组件，支持多种图表/大屏展示/动态刷新,ECharts/Vue.js/Spring Boot,前端组件,生产级,5,06_技术方案知识库/组件文档/TC-007_数据可视化.docx,周婷,v3.0,RESTful API,无,支持50+图表类型,含大屏设计器
+TC-008,日志审计组件,基础组件,统一日志采集/存储/检索/告警，支持操作审计/安全审计/合规报告,ElasticSearch/Logstash/Kibana,集群部署,生产级,3,06_技术方案知识库/组件文档/TC-008_日志审计.docx,孙磊,v2.1,RESTful API,ElasticSearch/Kafka,日处理100GB日志,满足等保三级审计要求
+TC-009,API网关组件,基础组件,统一API入口/路由转发/限流熔断/认证鉴权/协议转换,Spring Cloud Gateway/Redis,微服务部署,生产级,4,06_技术方案知识库/组件文档/TC-009_API网关.docx,王强,v2.5,RESTful/WebSocket,Redis/注册中心,10000 QPS/支持灰度发布,微服务架构标配
+TC-010,数据治理组件,基础组件,数据标准管理/质量检查/元数据管理/血缘分析/数据资产目录,Spring Boot/PostgreSQL/ElasticSearch,微服务部署,试运行,1,06_技术方案知识库/组件文档/TC-010_数据治理.docx,李明,v0.9,RESTful API,PostgreSQL,待完善,新组件，正在试点验证

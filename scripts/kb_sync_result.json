@@ -1,0 +1,18 @@
+{
+  "check_time": "2026-08-10T17:30:31.754785",
+  "total": 5,
+  "needs_sync": 1,
+  "up_to_date": 4,
+  "files_to_sync": [
+    {
+      "name": "行业技术标准库_种子版.md",
+      "path": "C:\\Users\\Administrator\\WorkBuddy\\2026-08-07-16-36-41\\知识库种子内容\\行业技术标准库_种子版.md",
+      "hash": "97d389b2ad857a9dfae19d58ee9882f9",
+      "modified": "2026-08-10T17:20:53.089998",
+      "size": "9.1 KB",
+      "last_synced": "2026-08-10T11:48:00",
+      "status": "UPDATED"
+    }
+  ],
+  "kb_id": "001a9d12b7c0755c"
+}

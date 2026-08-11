@@ -1,0 +1,116 @@
+{
+  "base_path": "D:\\KB_manager",
+  "version": "3.0",
+  "created": "2026-08-11",
+  "description": "标书智能体知识库配置 — 默认ima云端+local_search本地，ChromaDB为高级选项",
+
+  "backend": {
+    "type": "local_search",
+    "description": "默认: local_search(零依赖) / ima(云端) / both(混合) / chromadb(高级)",
+
+    "local_search": {
+      "context_chars": 200,
+      "max_results": 10,
+      "supported_extensions": [".md", ".txt", ".markdown"],
+      "description": "轻量级全文检索，零安装零下载，适合所有用户"
+    },
+
+    "ima": {
+      "public_kb_id": "",
+      "private_kb_id": "",
+      "description": "公共库=法规/废标模式/标书模板(共享)，私有库=用户自建(隔离)"
+    },
+
+    "chromadb": {
+      "persist_directory": "chroma_db",
+      "collection_name": "bid_assistant_kb",
+      "embedding_model": "all-MiniLM-L6-v2",
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "description": "高级选项：语义搜索，需安装chromadb+sentence-transformers，下载~90MB模型"
+    }
+  },
+
+  "cloud_seed_dir": "01_云端知识库\\种子文件",
+  "cloud_script_dir": "01_云端知识库\\管理脚本",
+  "cloud_log_dir": "01_云端知识库\\同步日志",
+  "local_kb_dir": "02_本地知识库",
+  "upload_staging_dir": "03_待上传",
+  "template_dir": "04_CSV模板",
+
+  "local_databases": {
+    "company_qualification": "01_公司资质库",
+    "personnel": "02_人员信息库",
+    "performance": "03_业绩案例库",
+    "pricing": "04_报价方案库",
+    "template": "05_标书模板库",
+    "technical_solution": "06_技术方案库"
+  },
+
+  "local_db_files": {
+    "01_公司资质库": ["公司资质清单.csv"],
+    "02_人员信息库": ["人员基本信息表.csv", "人员技能矩阵表.csv"],
+    "03_业绩案例库": ["业绩案例清单.csv"],
+    "04_报价方案库": ["报价历史记录.csv"],
+    "05_标书模板库": ["标书模板目录.csv"],
+    "06_技术方案库": ["技术方案资产库.csv", "技术组件库.csv", "解决方案模式库.csv", "技术评分要素库.csv"]
+  },
+
+  "seed_files": [
+    "废标条款模式库_种子版.md",
+    "标书核心法规汇编_v1.0.md",
+    "行业技术标准库_种子版.md",
+    "招投标报价与商务法规专题库_种子版.md",
+    "资质等效替代规则库_种子版.md"
+  ],
+
+  "shared_content": {
+    "description": "开源共享知识库内容（脱敏后共享给社区）",
+    "categories": {
+      "legal_regulations": {
+        "name": "法律法规库",
+        "files": ["标书核心法规汇编_v1.0.md", "招投标报价与商务法规专题库_种子版.md"],
+        "description": "公开法规，所有用户共享检索"
+      },
+      "disqualification_patterns": {
+        "name": "废标条款模式库",
+        "files": ["废标条款模式库_种子版.md"],
+        "description": "废标识别模式，帮助所有用户识别风险"
+      },
+      "bid_templates": {
+        "name": "标书模板/范文",
+        "files": [],
+        "description": "用户自己整理的标书模板和范文片段，脱敏后共享"
+      }
+    }
+  },
+
+  "template_files": [
+    "公司资质清单_模板.csv",
+    "人员基本信息表_模板.csv",
+    "人员技能矩阵表_模板.csv",
+    "业绩案例清单_模板.csv",
+    "报价历史记录_模板.csv",
+    "标书模板目录_模板.csv",
+    "技术方案资产库_模板.csv",
+    "技术组件库_模板.csv",
+    "解决方案模式库_模板.csv",
+    "技术评分要素库_模板.csv"
+  ],
+
+  "script_files": [
+    "kb_backend.py",
+    "kb_local_search.py",
+    "kb_ima.py",
+    "kb_setup.py",
+    "kb_auto_index.py",
+    "kb_sync_manager.py",
+    "kb_init.py"
+  ],
+
+  "script_files_advanced": [
+    "kb_chromadb.py"
+  ],
+
+  "skip_files": ["ima建库操作指引.md"]
+}
