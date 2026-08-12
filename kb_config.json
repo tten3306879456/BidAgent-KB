@@ -3,18 +3,19 @@
   "version": "3.0",
   "created": "2026-08-11",
   "description": "标书智能体知识库配置 — 默认ima云端+local_search本地，ChromaDB为高级选项",
-
   "backend": {
     "type": "local_search",
     "description": "默认: local_search(零依赖) / ima(云端) / both(混合) / chromadb(高级)",
-
     "local_search": {
       "context_chars": 200,
       "max_results": 10,
-      "supported_extensions": [".md", ".txt", ".markdown"],
+      "supported_extensions": [
+        ".md",
+        ".txt",
+        ".markdown"
+      ],
       "description": "轻量级全文检索，零安装零下载，适合所有用户"
     },
-
     "ima": {
       "public_kb_id": "",
       "private_kb_id": "",
@@ -27,7 +28,6 @@
       },
       "description": "5 座共享知识库 (v2026-08-12 重定义)：标书法规库(招投标法律条文) / 标书案例库(废标案例) / 投标文件编辑模板库(投标模板) / 软件开发标书知识库(软件行业标准) / 核工业标书知识库(核工业标准)"
     },
-
     "chromadb": {
       "persist_directory": "chroma_db",
       "collection_name": "bid_assistant_kb",
@@ -37,14 +37,12 @@
       "description": "高级选项：语义搜索，需安装chromadb+sentence-transformers，首次下载~1.3GB中文嵌入模型"
     }
   },
-
   "cloud_seed_dir": "01_云端知识库/种子文件",
   "cloud_script_dir": "01_云端知识库/管理脚本",
   "cloud_log_dir": "01_云端知识库/同步日志",
   "local_kb_dir": "02_本地知识库",
   "upload_staging_dir": "03_待上传",
   "template_dir": "04_CSV模板",
-
   "local_databases": {
     "company_qualification": "01_公司资质库",
     "personnel": "02_人员信息库",
@@ -53,16 +51,30 @@
     "template": "05_标书模板库",
     "technical_solution": "06_技术方案库"
   },
-
   "local_db_files": {
-    "01_公司资质库": ["公司资质清单.csv"],
-    "02_人员信息库": ["人员基本信息表.csv", "人员技能矩阵表.csv"],
-    "03_业绩案例库": ["业绩案例清单.csv"],
-    "04_报价方案库": ["报价历史记录.csv"],
-    "05_标书模板库": ["标书模板目录.csv"],
-    "06_技术方案库": ["技术方案资产库.csv", "技术组件库.csv", "解决方案模式库.csv", "技术评分要素库.csv"]
+    "01_公司资质库": [
+      "公司资质清单.csv"
+    ],
+    "02_人员信息库": [
+      "人员基本信息表.csv",
+      "人员技能矩阵表.csv"
+    ],
+    "03_业绩案例库": [
+      "业绩案例清单.csv"
+    ],
+    "04_报价方案库": [
+      "报价历史记录.csv"
+    ],
+    "05_标书模板库": [
+      "标书模板目录.csv"
+    ],
+    "06_技术方案库": [
+      "技术方案资产库.csv",
+      "技术组件库.csv",
+      "解决方案模式库.csv",
+      "技术评分要素库.csv"
+    ]
   },
-
   "seed_files": [
     "废标条款模式库_种子版.md",
     "标书核心法规汇编_v1.0.md",
@@ -80,26 +92,38 @@
     "技术标书模板_信息化项目方案框架.md",
     "评分响应与偏离表模板集.md"
   ],
-
   "shared_content": {
     "description": "开源共享知识库内容（脱敏后共享给社区）",
     "categories": {
       "legal_regulations": {
         "name": "标书法规库",
         "kb_id": "7493174142445773",
-        "files": ["标书核心法规汇编_v1.0.md", "招投标报价与商务法规专题库_种子版.md", "标书法规库_2024-2025新增法规.md"],
+        "files": [
+          "标书核心法规汇编_v1.0.md",
+          "招投标报价与商务法规专题库_种子版.md",
+          "标书法规库_2024-2025新增法规.md"
+        ],
         "description": "招投标相关的法律条文——招标投标法、政府采购法、报价规则、保证金、最新法规等，所有用户共享检索"
       },
       "disqualification_patterns": {
         "name": "标书案例库",
         "kb_id": "7493174285050353",
-        "files": ["废标条款模式库_种子版.md", "资质等效替代规则库_种子版.md", "标书案例库_2024-2025典型案例.md"],
+        "files": [
+          "废标条款模式库_种子版.md",
+          "资质等效替代规则库_种子版.md",
+          "标书案例库_2024-2025典型案例.md"
+        ],
         "description": "废标案例库——废标条款模式、历史废标案例分析、资质等效经验规则，帮助所有用户识别投标风险"
       },
       "bid_templates": {
         "name": "投标文件编辑模板库",
         "kb_id": "7493174465429392",
-        "files": ["投标文件通用框架与封面模板.md", "商务标书模板_投标函与响应表.md", "技术标书模板_信息化项目方案框架.md", "评分响应与偏离表模板集.md"],
+        "files": [
+          "投标文件通用框架与封面模板.md",
+          "商务标书模板_投标函与响应表.md",
+          "技术标书模板_信息化项目方案框架.md",
+          "评分响应与偏离表模板集.md"
+        ],
         "description": "投标文件编辑模板——通用目录结构、封面格式、投标函/授权书/报价表、技术方案框架、评分响应/偏离表等可直接套用的撰写模板"
       },
       "software_development": {
@@ -123,7 +147,6 @@
       }
     }
   },
-
   "template_files": [
     "公司资质清单_模板.csv",
     "人员基本信息表_模板.csv",
@@ -136,7 +159,6 @@
     "解决方案模式库_模板.csv",
     "技术评分要素库_模板.csv"
   ],
-
   "script_files": [
     "kb_backend.py",
     "kb_local_search.py",
@@ -148,10 +170,12 @@
     "channel_notify.py",
     "setup_wizard.py"
   ],
-
   "script_files_advanced": [
     "kb_chromadb.py"
   ],
-
-  "skip_files": ["ima建库操作指引.md"]
+  "skip_files": [
+    "ima建库操作指引.md"
+  ],
+  "last_setup": "2026-08-12T18:06:39.088632",
+  "setup_backend": "local_search"
 }
