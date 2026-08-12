@@ -20,6 +20,11 @@ chroma_db_*
 # Environment variables
 .env
 
+# Temporary upload manifests containing COS credentials
+upload_manifest*.json
+*_upload_manifest.json
+cos_manifest*.json
+
 # IDE
 .vscode/
 .idea/
@@ -37,6 +42,17 @@ desktop.ini
 # Temporary files
 *.tmp
 *.bak
+
+# HTML preview files (generated from .md, not source code)
+docs/*.html
+test/*.html
+
+# Temporary conversion/fix scripts
+test/convert_*.py
+test/fix_*.py
+
+# Local knowledge base data (user private data)
+kb_data/
 
 # WorkBuddy workspace data (user-specific, not version controlled)
 .workbuddy/

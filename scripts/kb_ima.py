@@ -201,7 +201,7 @@ class ImaBackend(KBBackend):
     def import_seed_files(self, seed_dir: str = None, seed_files: list = None) -> dict:
         """批量导入种子文件（生成上传指令）"""
         if seed_dir is None:
-            base_path = self.full_config.get("base_path", "D:/KB_manager")
+            base_path = self.full_config.get("base_path", "./kb_data")
             cloud_seed = self.full_config.get("cloud_seed_dir", "01_云端知识库/种子文件")
             seed_dir = str(Path(base_path) / cloud_seed)
 

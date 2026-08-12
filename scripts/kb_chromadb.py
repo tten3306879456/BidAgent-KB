@@ -460,7 +460,7 @@ class ChromaDBBackend(KBBackend):
         """
         # 从配置中获取种子文件目录和列表
         if seed_dir is None:
-            base_path = self.full_config.get("base_path", "D:/KB_manager")
+            base_path = self.full_config.get("base_path", "./kb_data")
             cloud_seed = self.full_config.get("cloud_seed_dir", "01_云端知识库/种子文件")
             seed_dir = str(Path(base_path) / cloud_seed)
 

@@ -1,0 +1,46 @@
+{
+  "name": "tender-review-expert",
+  "version": "1.0.0",
+  "description": "Tender document review expert that audits the parsed requirements checklist for completeness, hidden risks, and legal compliance",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/tender-review-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "tender-review-expert",
+
+  "displayName": {
+    "en": "Tender Document Review Expert",
+    "zh": "招标文件审核专家"
+  },
+  "profession": {
+    "en": "Senior Tender Document Auditor",
+    "zh": "招标文件审核专家"
+  },
+  "displayDescription": {
+    "en": "Former bid evaluation committee member with 15+ years experience. Audits tender analysis output for completeness, hidden risks, ambiguous clauses, and legal compliance. Outputs pass/conditional/rollback verdicts.",
+    "zh": "审核招标解析要点的完整性，识别隐藏风险与排他条款，验证法律合规性，输出审核结论。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供招标解析专家输出的要点清单（JSON格式），我将对招标文件进行审核：检查要点完整性、识别隐藏风险、验证法律合规性、预估本地数据缺口。",
+    "en": "Please provide the requirements checklist (JSON) from the Tender Analysis Expert. I will audit the tender document for completeness, hidden risks, legal compliance, and local data gaps."
+  },
+  "plugin": "tender-review-expert",
+  "tags": [
+    { "en": "Tender Review", "zh": "招标审核" },
+    { "en": "Risk Identification", "zh": "风险识别" },
+    { "en": "Legal Compliance", "zh": "法律合规" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the requirements checklist (JSON) from the Tender Analysis Expert. I will audit the tender document for completeness, hidden risks, legal compliance, and local data gaps.",
+      "zh": "请提供招标解析专家输出的要点清单（JSON格式），我将对招标文件进行审核：检查要点完整性、识别隐藏风险、验证法律合规性、预估本地数据缺口。" },
+    { "en": "Audit this requirements checklist for hidden risks, ambiguous clauses, exclusionary conditions, and compliance issues.",
+      "zh": "审核这份要点清单，找出隐藏风险、模糊条款、排他性条件和合规问题。" },
+    { "en": "Check if all disqualification clauses are identified and match them against the disqualification pattern library.",
+      "zh": "检查废标条款是否全部识别，并匹配废标条款模式库。" }
+  ]
+}

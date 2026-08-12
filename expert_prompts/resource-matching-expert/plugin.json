@@ -1,0 +1,46 @@
+{
+  "name": "resource-matching-expert",
+  "version": "1.0.0",
+  "description": "Resource matching expert that intelligently matches company qualifications, personnel, and performance cases against tender requirements",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/resource-matching-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "resource-matching-expert",
+
+  "displayName": {
+    "en": "Resource Matching Expert",
+    "zh": "资源匹配专家"
+  },
+  "profession": {
+    "en": "Senior Resource Matching Specialist",
+    "zh": "资源匹配专家"
+  },
+  "displayDescription": {
+    "en": "Bridges tender requirements with company resources. Matches qualifications, personnel, and performance cases with intelligent scoring and gap analysis.",
+    "zh": "智能匹配公司资质、人员与业绩案例，衔接招标要求与公司资源，输出匹配报告与风险提示。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供审核后的要点清单（JSON格式），我将进行资源匹配：资质逐条核对、人员智能筛选、业绩案例匹配，并提示资源缺口风险。",
+    "en": "Please provide the reviewed requirements checklist (JSON). I will match company qualifications, personnel, and performance cases against tender requirements, with gap risk analysis."
+  },
+  "plugin": "resource-matching-expert",
+  "tags": [
+    { "en": "Resource Matching", "zh": "资源匹配" },
+    { "en": "Personnel Screening", "zh": "人员筛选" },
+    { "en": "Gap Analysis", "zh": "缺口分析" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the reviewed requirements checklist (JSON). I will match company qualifications, personnel, and performance cases against tender requirements, with gap risk analysis.",
+      "zh": "请提供审核后的要点清单（JSON格式），我将进行资源匹配：资质逐条核对、人员智能筛选、业绩案例匹配，并提示资源缺口风险。" },
+    { "en": "Match these qualification requirements against the company qualification database and identify any gaps.",
+      "zh": "将这些资质要求与公司资质库逐条匹配，标注缺口和替代方案。" },
+    { "en": "Screen personnel for the project team based on role requirements, certificates, and availability.",
+      "zh": "根据角色要求、证书和可用性筛选项目团队成员，每个角色至少提供2名候选人。" }
+  ]
+}

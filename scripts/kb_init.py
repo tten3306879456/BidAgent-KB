@@ -6,9 +6,9 @@
 一键创建完整的知识库目录结构，复制种子文件、管理脚本和CSV模板。
 
 用法:
-  python kb_init.py "D:\\KB_manager"          创建目录结构并复制文件
-  python kb_init.py "D:\\KB_manager" --force   覆盖已存在的目录
-  python kb_init.py --help                      显示帮助
+  python kb_init.py "./kb_data"          创建目录结构并复制文件
+  python kb_init.py "./kb_data" --force   覆盖已存在的目录
+  python kb_init.py --help                显示帮助
 """
 
 import sys
@@ -36,7 +36,7 @@ def load_config(config_path=None):
         with open(config_path, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "ima_knowledge_base_id": "001a9d12b7c0755c",
+        "ima_knowledge_base_id": "",
         "cloud_seed_dir": r"01_云端知识库\种子文件",
         "cloud_script_dir": r"01_云端知识库\管理脚本",
         "cloud_log_dir": r"01_云端知识库\同步日志",
@@ -192,8 +192,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="知识库目录初始化工具 - 一键创建完整知识库目录结构",
     )
-    parser.add_argument("target", nargs="?", default=r"D:\KB_manager",
-                        help="目标路径 (默认: D:\\KB_manager)")
+    parser.add_argument("target", nargs="?", default="./kb_data",
+                        help="目标路径 (默认: ./kb_data)")
     parser.add_argument("--force", action="store_true", help="覆盖已存在的目录")
     parser.add_argument("--config", default=None, help="指定配置文件路径")
     args = parser.parse_args()

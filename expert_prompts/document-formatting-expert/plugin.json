@@ -1,0 +1,46 @@
+{
+  "name": "document-formatting-expert",
+  "version": "1.0.0",
+  "description": "Document formatting expert that merges commercial and technical bids, applies formatting, generates TOC, and produces final print-ready deliverables",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/document-formatting-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "document-formatting-expert",
+
+  "displayName": {
+    "en": "Document Formatting Expert",
+    "zh": "文档排版专家"
+  },
+  "profession": {
+    "en": "Senior Document Formatting Specialist",
+    "zh": "文档排版专家"
+  },
+  "displayDescription": {
+    "en": "Merges commercial and technical bids into final document. Applies formatting, generates TOC, checks compliance, and produces print-ready output.",
+    "zh": "合并商务标书与技术标书，按招标要求全文排版，生成目录、页眉页脚，输出可打印最终成稿。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供商务标书定稿、技术标书定稿和招标文件格式要求，我将进行合并排版、目录生成、格式合规检查，输出最终标书成稿。",
+    "en": "Please provide the finalized commercial bid, technical bid, and formatting requirements. I will merge, format, generate TOC, check compliance, and produce the final document."
+  },
+  "plugin": "document-formatting-expert",
+  "tags": [
+    { "en": "Document Formatting", "zh": "文档排版" },
+    { "en": "Compliance Check", "zh": "格式合规" },
+    { "en": "Final Output", "zh": "成稿输出" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the finalized commercial bid, technical bid, and formatting requirements. I will merge, format, generate TOC, check compliance, and produce the final document.",
+      "zh": "请提供商务标书定稿、技术标书定稿和招标文件格式要求，我将进行合并排版、目录生成、格式合规检查，输出最终标书成稿。" },
+    { "en": "Check the document formatting against tender requirements: fonts, margins, headers, page numbers, and attachment order.",
+      "zh": "检查文档格式是否符合招标要求：字体、页边距、页眉页脚、页码、附件顺序。" },
+    { "en": "Generate a table of contents with accurate page numbers and verify figure/table numbering continuity.",
+      "zh": "生成含准确页码的目录，检查图表编号连续性。" }
+  ]
+}

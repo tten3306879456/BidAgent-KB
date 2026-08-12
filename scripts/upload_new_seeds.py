@@ -1,10 +1,50 @@
 #!/usr/bin/env python3
-"""Upload 3 new seed content files to COS using temporary credentials from ima-mcp."""
+"""批量 COS 上传脚本（urllib 签名版）。
+
+本脚本用于一次性上传多个种子文件到 COS，供 ima 知识库使用。
+上传所需的临时凭证由 ima-mcp 的 create_media 工具逐个文件获取。
+
+使用方法:
+    1. 为每个待上传文件调用 ima-mcp create_media，获取 cos_credential JSON。
+    2. 将这些信息汇总成一个 manifest JSON 文件（见下方格式）。
+    3. 运行本脚本:
+        python upload_new_seeds.py --manifest upload_manifest.json
+
+manifest.json 示例:
+    [
+      {
+        "path": "D:/BidAgent-KB/seeds/行业技术标准库_种子版.md",
+        "media_id": "markdown_...",
+        "cos_credential": {
+          "secret_id": "...",
+          "secret_key": "...",
+          "token": "...",
+          "bucket_name": "ima-media-prod-1258344701",
+          "region": "ap-shanghai",
+          "cos_key": "2/.../file_manager/....md",
+          "start_time": "1786337999",
+          "expired_time": "1786381199"
+        },
+        "content_type": "text/markdown"
+      }
+    ]
+
+注意：
+- 临时凭证有效期通常只有数小时，过期后需重新调用 create_media 获取。
+- 切勿将 manifest 文件提交到 Git 仓库（已加入 .gitignore 建议项）。
+- 本脚本仅完成 COS 上传，上传成功后还需调用 ima-mcp 的 add_knowledge
+  将 media_id 关联到知识库。
+"""
+
+import argparse
 import hashlib
 import hmac
+import json
 import sys
 import urllib.request
 import urllib.error
+from pathlib import Path
+
 
 def calc_cos_signature(secret_id, secret_key, method, path, headers, key_time):
     sign_key = hmac.new(secret_key.encode(), key_time.encode(), hashlib.sha1).hexdigest()
@@ -27,6 +67,7 @@ def calc_cos_signature(secret_id, secret_key, method, path, headers, key_time):
     )
     return auth
 
+
 def upload_to_cos(file_path, cos_credential, content_type):
     secret_id = cos_credential["secret_id"]
     secret_key = cos_credential["secret_key"]
@@ -45,8 +86,7 @@ def upload_to_cos(file_path, cos_credential, content_type):
         file_data = f.read()
 
     sign_headers = {"host": host}
-    sign_path = cos_key
-    auth = calc_cos_signature(secret_id, secret_key, "put", sign_path, sign_headers, key_time)
+    auth = calc_cos_signature(secret_id, secret_key, "put", cos_key, sign_headers, key_time)
 
     headers = {
         "Authorization": auth,
@@ -70,73 +110,60 @@ def upload_to_cos(file_path, cos_credential, content_type):
         print(f"  Upload FAILED! Error: {e}")
         return False
 
-files = [
-    {
-        "path": r"C:\Users\Administrator\WorkBuddy\2026-08-07-16-36-41\知识库种子内容\行业技术标准库_种子版.md",
-        "media_id": "markdown_5ed40ba2d36a302455d0d1e3065167fa_81b302cdc3d07f63a5730a2dbcdfed34001a9d12b7c0755c",
-        "cos_credential": {
-            "token": "3k8x7ZWvtEiG2T25vOlQt7vKQ6uHqKPa62dc478e365150350b81a8768e43d8ce1oEGNiKt0tsaadNXlrFMOJ5MfQX9PEHsTYLRYH0mxmguv866Meb4o5XSL1IQuOoEHp7E2AWSQu9g8gVkqlKJo8pzAgp1SyYcXiW2Cb2BqA-NKt3L1U6B0O0YyJrTbEJ2VCUJjEZ7GCfcbDJxZZXjgMBbY1L5ccGRHpWb-eVIoE0QuASKaHHgja59TGqoFac-yG4ad3p8SGSENQGAmahv8R9UTb0Xw2Eku1QoGPw7UWweYk1Cy3kMAaj1zxcPOz3PUFaILQ_tVe9I7LmgzQ9SoeswyNqkzTJGuN7ND7eyGwXcNMIXH8wnp0qefmpSwq8-x0ISxpD5HFpbDzwWkmC6hwnyZtQNR22hLbc6_EeJU6VpO-dxclPMqkjxy263pPAgkPht_Kcr1db1hEw9onQlBYjfpyCyXNMB_GEyFX0uOQgGCV1uqsDYtsDXunDLIEjVFkF-DyHYkW7Ab9bn1ykRmyBovpqDjsPf3NPxzn3tB5oap0ufdG6CFAVQjzGR-85Wt0YxT7Moeb6ZVVMU9OQ1_BWsj4Pbemz4N-xltovRzNq9u7yvIi_mxDfEaKlsqnMaLrgFg6DgEoysYEf76HflmQC2rQdyNonMGBRFQGiCwnWYeR_8c4y8jnSCJmmOXSHFo-UqYx3DSz4GcZqT5mwRRo0xhs1Q0B3Nc6YtXHp22FJbWIPclDbiPcOtg9LcFQzkl4nN99cfacb2UuoUdUKlZ6SzhrokpQhQIHp0RwTS1k7O-_Zh37n5tpQbjlHHq64IpgppiwTOSyVjMcaj3E1kX-XKlaxjVai1tyLzYHwLEt7allSQuOGJNapbQu7qqcas",
-            "secret_id": "AKIDott6RynZtmktDvPwzFHD6kxnuGvpW7aDae0H_QEn1jvx0O1i7qauOUwrt3nQyuww",
-            "secret_key": "HS3tOo6d73ZA1jIvXYPoHAeadux2JNpdlDyr74mmDrI=",
-            "start_time": "1786337999",
-            "expired_time": "1786381199",
-            "appid": "1258344701",
-            "bucket_name": "ima-media-prod-1258344701",
-            "region": "ap-shanghai",
-            "custom_domain": "ima-media-prod.image.myqcloud.com",
-            "cos_key": "2/I2kYEe4oeHwMPqer5fRfj9A/file_manager/019fea0abb5c78839c46197a928fb3cd.md"
-        },
-        "content_type": "text/markdown"
-    },
-    {
-        "path": r"C:\Users\Administrator\WorkBuddy\2026-08-07-16-36-41\知识库种子内容\招投标报价与商务法规专题库_种子版.md",
-        "media_id": "markdown_5ed40ba2d36a302455d0d1e3065167fa_1c3c4e2d81a8ce7f61ed5ba8a5b49d86001a9d12b7c0755c",
-        "cos_credential": {
-            "token": "01y4YTL1NNu1tUFJeUjUsSw0AMnRz1wa423cff6be6a235da2232d3e341b9d4feOAQGPnhHTbklKRC1YFaTEsyMcUzOE35TEVcXzpUUYQYB0VEgL7cnn-wqd-7rGWGeBKqovZ8k8bzCJLxDk_FL5fpYk-YhAUnIizxq_BT9KOkJ2iCiBRXxo0ekDztNDEYrJWgMFDisYZNg_lt3xihYHB6HNiUKunLamZyOu61l6WlMEUpNLNLnp8ruwI6V6aQebFwezXI_Xtf9zDr3WdyAL4NYmtOwjc3pALqrmlN5uCEvuwPS61YSdtgL6tSzWJMNLG2ohcEaHzL0LCh52TbOhlOqPFiouJH33igecn_CwlCNpMu-7Yuspg1naMfd6b8uRXkd-0v3emmgwqq9jNBs4xYgA1cdbdgIHQkgwK3d1hL-GxJPvlLImA-GAhwkQ-uyt1Zcdh10F2ua5UYQxp9qhktYDbt-12ruLskZbLmR6lWCubdFdPxSWKal7IEJE-2x1AR90MOqiaJsudFa2A_593DC_rhupaiztRSPnCjpguTQrmrk3Vu4QMUYSgAH_ybuulBGjeGpFTxMnil7zjYsbxR842ywlvRKB7x1Bnh_xTPrdbig221tg1v3-UjPUXlfjg6buCBnnBWNUjiVv-8HCi_v0iORIye4nkzLqgSs1_Roc3grmKNEipR5YwZIfsLr7vQjVa-onty28X_UUtGtAMR4T0rXXIMzkYgcSzTCglipQwE18VceWhOEfCqYXdontr07IP_Zm_kSCMxjbuhF24TjerSkJH4cDNtweNajOaISL9zSGHFZXT9HtrdzzU3m-pK3XP1HAp2kGwa6ZrXMZSVI_71EKBcQexvsH3qOg52yyDmZ7wOSMlCwMhXJ8uT0",
-            "secret_id": "AKIDKYnpH7btSWEFO-BDTo46eNu8F_FgkGzaG-5hjDldLRi0O0MrDrkT-faq4-9DqRLj",
-            "secret_key": "j3ULUwW2FjF5322BQOuBQqecYIWpkKy0gWRVR2EKeZg=",
-            "start_time": "1786338003",
-            "expired_time": "1786381203",
-            "appid": "1258344701",
-            "bucket_name": "ima-media-prod-1258344701",
-            "region": "ap-shanghai",
-            "custom_domain": "ima-media-prod.image.myqcloud.com",
-            "cos_key": "2/I2kYEe4oeHwMPqer5fRfj9A/file_manager/019fea0ac8b17df39151eef3e6b138c6.md"
-        },
-        "content_type": "text/markdown"
-    },
-    {
-        "path": r"C:\Users\Administrator\WorkBuddy\2026-08-07-16-36-41\知识库种子内容\资质等效替代规则库_种子版.md",
-        "media_id": "markdown_5ed40ba2d36a302455d0d1e3065167fa_e7e204523c6406116c716ffdce14fbf9001a9d12b7c0755c",
-        "cos_credential": {
-            "token": "01y4YTL1NNu1tUFJeUjUsSw0AMnRz1wa4598261b9722b0c4574a80625fe35f5cOAQGPnhHTbklKRC1YFaTEiorLzEAKHCxNNqqBvJFA-EVUwPOwrBb_uL-YEvGWZsIGRAxyEtkUKbNdT6TgmxSdPUPkeiahhMBxhGhdCjoef5LYwQZX8lbdFWeiCmlldKUcRljrNWbPNBXXHohH8XG0z93GuW5zl34cxNmPx_zFVn0BUZNfN6kCWIyLiIhzGWRmc7Ufj0t0r8IaPuMxFDz1rSQeUTlElwFolxxWtwiFEnX1u_ucryBzzz9Qnb_KQoTo4TCRkp700B9FWX6GN1FmvqCvt_TgJ9E2ZdJjZE-24hZpup6NVeKXVomKsDgLOU9rCIKN-GssM_g-HH59GvdIUruR_tn1i4qLmptwUcK9wqB67PIQiUQgyCoad0l-VQ3FhXlBLQUKgnGAm08KvE-kaUWmu_O2I4vEZJ0vHeT6qclU5Iz4d7uOajvluTmcE2d4fd9foWlzDosjNxFJ8AGmUrIHN2rD18-nXzL7jWO11c3lC7NhVp_oOifd12kOTrEu-mQuR0xnhSrhRzSyioJKa4WkPEJKs0alVOVeFm90I3fzcAx-1O8gaxbUY6KXtL7ZxAopSJZyIa-4c7mmwbrBIGc1vt0LZP8HGhiljPEX3qewSlyF0SqFvTv52Wu6ZufNxXKhWYfzP1rgEaouHhvujWkbJjaHqVhzjMIfP6sY0kGN5E7XbRkkn9xhj1m12NBVsDXu-zLNVKT-2Wb2V_cU6a8L07BvV9KXJXJpjggqOQkWuzH2v9aPw-2m47Di4DOljUNipPEEqLPojbOm2lWi_a_5sbR2usELa7aeMCN4kH78NCRouGzsFrqgUVXFiJH",
-            "secret_id": "AKIDOmQnTSaxYKbucNEDLgqwlda9nw_3gWPg3ANaDEvHbdPPuTCch-iUsmoUC91T2a-a",
-            "secret_key": "Gj9PtPaDr3sMqAQ5jUcrH4Pnrsbn7vOD+yatlf0+PCg=",
-            "start_time": "1786338006",
-            "expired_time": "1786381206",
-            "appid": "1258344701",
-            "bucket_name": "ima-media-prod-1258344701",
-            "region": "ap-shanghai",
-            "custom_domain": "ima-media-prod.image.myqcloud.com",
-            "cos_key": "2/I2kYEe4oeHwMPqer5fRfj9A/file_manager/019fea0ad67374a7b01830fc069dbe4e.md"
-        },
-        "content_type": "text/markdown"
-    }
-]
 
-results = []
-for i, f in enumerate(files):
-    print(f"\n[{i+1}/{len(files)}] Uploading: {f['path'].split(chr(92))[-1]}")
-    print(f"  media_id: {f['media_id']}")
-    success = upload_to_cos(f["path"], f["cos_credential"], f["content_type"])
-    results.append({"file": f["path"], "media_id": f["media_id"], "success": success})
+def main():
+    parser = argparse.ArgumentParser(description="批量上传种子文件到 COS")
+    parser.add_argument("--manifest", required=True, help="包含文件列表和 COS 凭证的 JSON 清单文件")
+    args = parser.parse_args()
 
-print("\n--- Summary ---")
-for r in results:
-    status = "OK" if r["success"] else "FAILED"
-    print(f"  {status}: {r['file'].split(chr(92))[-1]} -> media_id: {r['media_id']}")
+    manifest_path = Path(args.manifest)
+    if not manifest_path.exists():
+        print(f"ERROR: 清单文件不存在: {manifest_path}")
+        sys.exit(1)
 
-print("\n--- Media IDs for add_knowledge ---")
-for r in results:
-    if r["success"]:
-        print(r["media_id"])
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        files = json.load(f)
+
+    if not isinstance(files, list):
+        print("ERROR: manifest 文件必须是一个 JSON 数组")
+        sys.exit(1)
+
+    results = []
+    for i, f in enumerate(files):
+        path = f.get("path", "")
+        media_id = f.get("media_id", "")
+        content_type = f.get("content_type", "text/markdown")
+        cred = f.get("cos_credential", {})
+
+        name = Path(path).name if path else f"<unknown-{i}>"
+        print(f"\n[{i+1}/{len(files)}] Uploading: {name}")
+        print(f"  media_id: {media_id}")
+
+        required = ["secret_id", "secret_key", "token", "bucket_name", "region", "cos_key", "start_time", "expired_time"]
+        missing = [k for k in required if k not in cred]
+        if missing:
+            print(f"  ERROR: cos_credential 缺少字段: {missing}")
+            results.append({"file": path, "media_id": media_id, "success": False})
+            continue
+
+        success = upload_to_cos(path, cred, content_type)
+        results.append({"file": path, "media_id": media_id, "success": success})
+
+    print("\n--- Summary ---")
+    for r in results:
+        status = "OK" if r["success"] else "FAILED"
+        name = Path(r["file"]).name if r["file"] else "<unknown>"
+        print(f"  {status}: {name} -> media_id: {r['media_id']}")
+
+    print("\n--- Media IDs for add_knowledge ---")
+    for r in results:
+        if r["success"]:
+            print(r["media_id"])
+
+    failed = [r for r in results if not r["success"]]
+    if failed:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

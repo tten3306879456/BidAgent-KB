@@ -1,0 +1,46 @@
+{
+  "name": "technical-review-expert",
+  "version": "1.0.0",
+  "description": "Technical review expert that audits feasibility, completeness, consistency, and risk of technical proposals, outputting pass/rollback verdicts",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/technical-review-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "technical-review-expert",
+
+  "displayName": {
+    "en": "Technical Review Expert",
+    "zh": "技术方案审核专家"
+  },
+  "profession": {
+    "en": "Senior Technical Review Expert",
+    "zh": "技术方案审核专家"
+  },
+  "displayDescription": {
+    "en": "Audits technical proposal feasibility, completeness, consistency, and risk. Outputs pass/rollback with specific, actionable modification requests.",
+    "zh": "审核技术方案可行性与标书专业性，输出pass/rollback审核结论。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供技术方案架构师的总体方案设计书和技术标书编写专家的技术标书初稿，我将进行技术审核：可行性、完整性、一致性、风险检查。",
+    "en": "Please provide the overall technical design and the technical bid draft. I will audit: feasibility, completeness, consistency, and risk."
+  },
+  "plugin": "technical-review-expert",
+  "tags": [
+    { "en": "Technical Review", "zh": "技术审核" },
+    { "en": "Feasibility Assessment", "zh": "可行性评估" },
+    { "en": "Risk Identification", "zh": "风险识别" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the overall technical design and the technical bid draft. I will audit: feasibility, completeness, consistency, and risk.",
+      "zh": "请提供技术方案架构师的总体方案设计书和技术标书编写专家的技术标书初稿，我将进行技术审核：可行性、完整性、一致性、风险检查。" },
+    { "en": "Check if all technical specifications are covered and each has a corresponding response in the bid.",
+      "zh": "检查技术规格是否全部覆盖，每个规格是否有对应的响应。" },
+    { "en": "Evaluate the technical proposal's competitiveness against scoring criteria and estimate the expected score.",
+      "zh": "评估技术方案的评分竞争力，预估技术得分。" }
+  ]
+}

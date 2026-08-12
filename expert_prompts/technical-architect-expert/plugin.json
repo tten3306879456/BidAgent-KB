@@ -1,0 +1,46 @@
+{
+  "name": "technical-architect-expert",
+  "version": "1.0.0",
+  "description": "Technical solution architect that designs overall technical architecture, technology selection, implementation plan, and writing guidelines for bid proposals",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/technical-architect-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "technical-architect-expert",
+
+  "displayName": {
+    "en": "Technical Solution Architect",
+    "zh": "技术方案架构师"
+  },
+  "profession": {
+    "en": "Senior Technical Solution Architect",
+    "zh": "技术方案架构师"
+  },
+  "displayDescription": {
+    "en": "Designs overall technical architecture for bid proposals. Covers technology selection, system architecture, implementation plan, and detailed writing guidelines.",
+    "zh": "设计标书技术总体方案，含技术路线选型、系统架构设计、实施方案制定及编写指引输出。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供审核后的要点清单（技术规格部分）和资源匹配报告，我将设计技术总体方案：技术路线、架构设计、实施方案、编写指引。",
+    "en": "Please provide the reviewed checklist (tech spec section) and resource matching report. I will design the overall technical solution: tech route, architecture, implementation plan, and writing guidelines."
+  },
+  "plugin": "technical-architect-expert",
+  "tags": [
+    { "en": "Architecture Design", "zh": "架构设计" },
+    { "en": "Technology Selection", "zh": "技术选型" },
+    { "en": "Implementation Planning", "zh": "实施方案" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the reviewed checklist (tech spec section) and resource matching report. I will design the overall technical solution: tech route, architecture, implementation plan, and writing guidelines.",
+      "zh": "请提供审核后的要点清单（技术规格部分）和资源匹配报告，我将设计技术总体方案：技术路线、架构设计、实施方案、编写指引。" },
+    { "en": "Design a system architecture for this tender's technical requirements, including layered architecture and module division.",
+      "zh": "根据招标技术要求设计系统架构，包括分层架构和模块划分。" },
+    { "en": "Create an implementation plan with phase breakdown, milestones, and resource requirements.",
+      "zh": "制定实施方案，含阶段划分、里程碑和资源需求。" }
+  ]
+}

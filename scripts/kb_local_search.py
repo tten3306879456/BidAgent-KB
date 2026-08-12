@@ -54,13 +54,13 @@ class LocalSearchBackend:
         # 根目录：优先用 backend 配置，其次用 full_config 的 base_path
         self.index_dir = Path(self.backend_cfg.get(
             "index_directory",
-            self.full_config.get("base_path", "D:/KB_manager")
+            self.full_config.get("base_path", "./kb_data")
         )) / self.full_config.get("cloud_seed_dir", "01_云端知识库/种子文件").replace("\\", "/")
 
         # 索引文件
         index_file_dir = Path(self.backend_cfg.get(
             "index_directory",
-            self.full_config.get("base_path", "D:/KB_manager")
+            self.full_config.get("base_path", "./kb_data")
         )) / self.full_config.get("cloud_log_dir", "01_云端知识库/同步日志").replace("\\", "/")
         self.index_file = index_file_dir / "local_search_index.json"
         index_file_dir.mkdir(parents=True, exist_ok=True)

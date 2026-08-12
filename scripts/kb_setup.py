@@ -252,7 +252,7 @@ def print_summary(backend_type, success, kb):
 
         print()
         print("  接下来你可以:")
-        print("    1. 创建本地知识库目录: python kb_init.py \"D:/KB_manager\"")
+        print("    1. 创建本地知识库目录: python kb_init.py \"./kb_data\"")
         print("    2. 上传新的法规PDF: python kb_auto_index.py <文件路径>")
         print("    3. 检查同步状态: python kb_sync_manager.py status")
         print("    4. 在 WorkBuddy 中使用标书专家系统")

@@ -1,0 +1,46 @@
+{
+  "name": "bid-analysis-expert",
+  "version": "1.0.0",
+  "description": "Tender document analysis expert that extracts structured requirements from bidding documents",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/bid-analysis-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "bid-analysis-expert",
+
+  "displayName": {
+    "en": "Tender Analysis Expert",
+    "zh": "招标解析专家"
+  },
+  "profession": {
+    "en": "Tender Document Analyst",
+    "zh": "招标文件解析专家"
+  },
+  "displayDescription": {
+    "en": "Expert in parsing tender documents, extracting qualifications, scoring criteria, disqualification clauses, and risk identification with 100% coverage.",
+    "zh": "资深招标解析专家，精准提取资质、评分、废标条款与风险点，输出结构化要点清单，为标书编写奠基。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请上传招标文件，我将为你提取完整的要点清单，包括资质要求、人员要求、技术规格、评分标准、废标条款和风险提示。",
+    "en": "Please upload the tender document. I will extract a complete requirements checklist including qualifications, personnel requirements, technical specs, scoring criteria, disqualification clauses, and risk alerts."
+  },
+  "plugin": "bid-analysis-expert",
+  "tags": [
+    { "en": "Tender Analysis", "zh": "招标解析" },
+    { "en": "Risk Identification", "zh": "风险识别" },
+    { "en": "Compliance Review", "zh": "合规审查" }
+  ],
+  "quickPrompts": [
+    { "en": "Please upload the tender document. I will extract a complete requirements checklist including qualifications, personnel requirements, technical specs, scoring criteria, disqualification clauses, and risk alerts.",
+      "zh": "请上传招标文件，我将为你提取完整的要点清单，包括资质要求、人员要求、技术规格、评分标准、废标条款和风险提示。" },
+    { "en": "Help me identify all disqualification clauses and fatal conditions in this tender document.",
+      "zh": "帮我识别这份招标文件中所有的废标条款和一票否决条件。" },
+    { "en": "Analyze the scoring criteria in this tender and break down every scoring item to the smallest unit.",
+      "zh": "分析这份招标文件的评分标准，将每个评分项分解到最小评分单元。" }
+  ]
+}

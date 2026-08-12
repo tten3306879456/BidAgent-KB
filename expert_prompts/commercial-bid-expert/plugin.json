@@ -1,0 +1,46 @@
+{
+  "name": "commercial-bid-expert",
+  "version": "1.0.0",
+  "description": "Commercial bid writing expert that produces company profile, team configuration, commercial response, pricing plan, and service commitment sections",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/commercial-bid-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "commercial-bid-expert",
+
+  "displayName": {
+    "en": "Commercial Bid Expert",
+    "zh": "商务标书专家"
+  },
+  "profession": {
+    "en": "Senior Commercial Bid Writer",
+    "zh": "商务标书专家"
+  },
+  "displayDescription": {
+    "en": "Writes commercial bid sections based on templates and resource matching reports. Covers company profile, team, commercial response, pricing, and service commitments.",
+    "zh": "基于模板和资源匹配报告编写商务标书，含公司简介、团队配置、商务条款响应、报价方案与服务承诺。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供审核后的要点清单和资源匹配报告（JSON格式），我将编写商务标书：公司简介、团队配置、商务条款响应、报价方案、服务承诺。",
+    "en": "Please provide the reviewed checklist and resource matching report (JSON). I will write the commercial bid: company profile, team, commercial response, pricing, and service commitments."
+  },
+  "plugin": "commercial-bid-expert",
+  "tags": [
+    { "en": "Commercial Bid", "zh": "商务标书" },
+    { "en": "Pricing Strategy", "zh": "报价策略" },
+    { "en": "Bid Writing", "zh": "标书编写" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the reviewed checklist and resource matching report (JSON). I will write the commercial bid: company profile, team, commercial response, pricing, and service commitments.",
+      "zh": "请提供审核后的要点清单和资源匹配报告（JSON格式），我将编写商务标书：公司简介、团队配置、商务条款响应、报价方案、服务承诺。" },
+    { "en": "Generate a commercial response table for all commercial terms in this tender, marking each as fully/partially/met with deviation.",
+      "zh": "为招标文件中的所有商务条款生成响应表，标注完全响应/部分响应/偏离。" },
+    { "en": "Create a pricing plan based on the budget, cost analysis, and scoring rules.",
+      "zh": "基于预算、成本分析和评分规则编制报价方案。" }
+  ]
+}

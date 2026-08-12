@@ -1,36 +1,54 @@
 #!/usr/bin/env python3
-"""Upload files to Tencent Cloud COS using temporary credentials from ima-mcp."""
+"""通用单文件 COS 上传脚本（urllib 纯标准库版）。
+
+本脚本不依赖 qcloud_cos SDK，仅使用 Python 标准库完成 COS 上传。
+上传所需的临时凭证（secret_id/secret_key/token/bucket/region/cos_key/start_time/expired_time）
+必须通过 ima-mcp 的 create_media 工具获取，然后通过以下任一方式传入：
+
+方式1 — 环境变量（推荐）:
+    export COS_SECRET_ID="..."
+    export COS_SECRET_KEY="..."
+    export COS_TOKEN="..."
+    export COS_BUCKET="ima-media-prod-1258344701"
+    export COS_REGION="ap-shanghai"
+    export COS_KEY="..."
+    export COS_START_TIME="..."
+    export COS_EXPIRED_TIME="..."
+    python cos_upload.py --file path/to/file.pdf
+
+方式2 — 命令行参数:
+    python cos_upload.py \
+        --file path/to/file.pdf \
+        --secret-id "..." --secret-key "..." --token "..." \
+        --bucket "ima-media-prod-1258344701" --region "ap-shanghai" \
+        --cos-key "..." --start-time "..." --expired-time "..."
+
+注意：
+- 临时凭证有效期通常只有数小时，过期后需重新调用 create_media 获取。
+- 切勿将临时凭证硬编码到脚本中或提交到 Git 仓库。
+- 本脚本仅完成 COS 上传，上传成功后还需调用 ima-mcp 的 add_knowledge
+  将 media_id 关联到知识库。
+"""
+
+import argparse
 import hashlib
 import hmac
-import json
+import os
 import sys
 import urllib.request
 import urllib.error
 
-def calc_cos_signature(secret_id, secret_key, method, path, headers, key_time):
-    """Calculate COS v5 signature."""
-    # SignKey = HMAC-SHA1(SecretKey, KeyTime) -> hex
-    sign_key = hmac.new(secret_key.encode(), key_time.encode(), hashlib.sha1).hexdigest()
 
-    # HeaderList = sorted header keys joined by ";"
+def calc_cos_signature(secret_id, secret_key, method, path, headers, key_time):
+    sign_key = hmac.new(secret_key.encode(), key_time.encode(), hashlib.sha1).hexdigest()
     header_keys = sorted(headers.keys())
     header_list = ";".join(header_keys)
-
-    # UrlParamList = empty for PUT
     url_param_list = ""
-
-    # FormatString
     header_str = "&".join(f"{k}={headers[k]}" for k in header_keys)
     format_string = f"{method.lower()}\n/{path}\n{url_param_list}\n{header_str}\n"
-
-    # StringToSign
     format_string_hash = hashlib.sha1(format_string.encode()).hexdigest()
     string_to_sign = f"sha1\n{key_time}\n{format_string_hash}\n"
-
-    # Signature
     signature = hmac.new(sign_key.encode(), string_to_sign.encode(), hashlib.sha1).hexdigest()
-
-    # Authorization header
     auth = (
         f"q-sign-algorithm=sha1"
         f"&q-ak={secret_id}"
@@ -43,40 +61,17 @@ def calc_cos_signature(secret_id, secret_key, method, path, headers, key_time):
     return auth
 
 
-def upload_to_cos(file_path, cos_credential, content_type):
-    """Upload a file to COS using temporary credentials."""
-    secret_id = cos_credential["secret_id"]
-    secret_key = cos_credential["secret_key"]
-    token = cos_credential["token"]
-    bucket = cos_credential["bucket_name"]
-    region = cos_credential["region"]
-    cos_key = cos_credential["cos_key"]
-    start_time = cos_credential["start_time"]
-    expired_time = cos_credential["expired_time"]
-
+def upload_to_cos(file_path, secret_id, secret_key, token, bucket, region, cos_key, start_time, expired_time, content_type):
     key_time = f"{start_time};{expired_time}"
-
-    # Build COS URL
     host = f"{bucket}.cos.{region}.myqcloud.com"
     url = f"https://{host}/{cos_key}"
 
-    # Read file content
     with open(file_path, "rb") as f:
         file_data = f.read()
 
-    # Headers for signature (only host is needed)
     sign_headers = {"host": host}
+    auth = calc_cos_signature(secret_id, secret_key, "put", cos_key, sign_headers, key_time)
 
-    # Calculate signature
-    # cos_key path: extract just the key part for signature path
-    # The path in FormatString should be the cos_key without leading slash
-    sign_path = cos_key
-
-    auth = calc_cos_signature(
-        secret_id, secret_key, "put", sign_path, sign_headers, key_time
-    )
-
-    # Build request headers
     headers = {
         "Authorization": auth,
         "x-cos-security-token": token,
@@ -85,14 +80,10 @@ def upload_to_cos(file_path, cos_credential, content_type):
         "Host": host,
     }
 
-    # Create and send request
     req = urllib.request.Request(url, data=file_data, headers=headers, method="PUT")
-
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
-            status = response.status
-            body = response.read().decode()
-            print(f"  Upload successful! Status: {status}")
+            print(f"  Upload successful! Status: {response.status}")
             return True
     except urllib.error.HTTPError as e:
         body = e.read().decode()
@@ -105,60 +96,70 @@ def upload_to_cos(file_path, cos_credential, content_type):
 
 
 def main():
-    files = [
-        {
-            "path": r"C:\Users\Administrator\WorkBuddy\2026-08-07-16-36-41\知识库种子内容\废标条款模式库_种子版.md",
-            "media_id": "markdown_5ed40ba2d36a302455d0d1e3065167fa_05fdda443a5b0a5e9437cce8db665fc8001a9d12b7c0755c",
-            "cos_credential": {
-                "token": "ME7nLdFUrvrOb47R32X6jkZimCRwZYCab797d56ca1feccf371739c38de23f704b8af6nPYjxtXc6Y-8NEkC3n84K1cNumGFq3-er-lf3lXP64bU-_aEgtbS2p2XDQrRSTWbNCjLWTUpejfz-rEFYi-TpSc5l2EVOr7eZRMZCwNV84JQFZzbFGAt8t-Sx6Cv94gyjgcKiqlomI_BV4wb7n6A6sQ5TEHoiP7ETgyGVPmzqzPLyGMEnt2qFljenSr1_dk-68apnwzmtNasDVhfWjA77ZlfCMkHDQHGYCuoDVw5a-ZuXZn0IYvZsdpgqEi471r8gkcDftXH4Cn2XKu-vzI-TOOq2hAsBNnauNDR1PAB95xSOBsDPOALOgh3zkTsQrBdEQwFIXtnMQRYsBr3mi_TZ-52T3yHYHIx6A7cdouUdIKzFz6r5NpdhlqDHaz-arm-ymg-0oal7dhcHHPkiXs8KIePg1UjiWhqRL22VfAXxeHU8ogwJweZPwxSWJ-_GLQC-CqG_H-6ip2V7dpA2X8zEnIUs-y8QJg5ujBmz3tqnt_mU2IM2F5FhBw8vpXKQJcgmO71NOYINZF2nuJtusZPVUhVPfe5eMyFrhF9VY3JUljk2sr17nMUMDhpJKhMZYwLlp41g08QMId6UxG3l8TACBaa9gCkaNB612MY1OTnaSanOyHnYY4IZf8oWUNBg-umfT3aFZGWfHDFRqhnJTRi0vL1a7LfiqeyNwT6u3tMpAh8JSBkTbjjDt83BQHCH-dMc1l-EdAi35Gw9270Z6HDlO8nt5JDqo-79T4lR1RIKzrNSPCls4tXNfJv33wsYSx_Zh98yrtPU4Uo_KeWaffahpYNL-SJ3WGiVQoV_0nLAB0UjwejVt7q-FmiWmc",
-                "secret_id": "AKIDjEiSih0WtpW5Jpp5XxnFVUIEgIP2YNjBALb5U8mw-ZpzHmFI01evJc07EPPqZl8d",
-                "secret_key": "un0Uh39oJbucr5yGb2p7Dr6MoQMszN0lvsOsqOunfI0=",
-                "start_time": "1786333612",
-                "expired_time": "1786376812",
-                "appid": "1258344701",
-                "bucket_name": "ima-media-prod-1258344701",
-                "region": "ap-shanghai",
-                "custom_domain": "ima-media-prod.image.myqcloud.com",
-                "cos_key": "2/I2kYEe4oeHwMPqer5fRfj9A/file_manager/019fe9c7cb73712b9ab22b5aaf12880d.md"
-            },
-            "content_type": "text/markdown"
-        },
-        {
-            "path": r"C:\Users\Administrator\WorkBuddy\2026-08-07-16-36-41\知识库种子内容\标书核心法规汇编_v1.0.md",
-            "media_id": "markdown_5ed40ba2d36a302455d0d1e3065167fa_63538948e10d8eb81da91099925701b3001a9d12b7c0755c",
-            "cos_credential": {
-                "token": "ME7nLdFUrvrOb47R32X6jkZimCRwZYCa212dae50b7ef673004f1db322e3f25d5b8af6nPYjxtXc6Y-8NEkC_yfFKvggYISbDi8R7mp2KAgWMOeHmi5B86ojiIU2qShffKODrdjo9aRbMPBEBAgF0LG298gurJzlUoxzOU0oGpPN_NCuuGyTQBhIalOg39Zu8qTtuFzCFaWzWhuNNYE351oGiJ4umOb6qYbTvVgmt2HQ-ElqmEFJeDBml_880BevCRs1prHZfQDnswr9jSw9EUIdPKKEGibtuusKsgoR15xc9YlVzEmlM-TWtK2D-imxxIp3d5TDVusV5mbZwuzIo8uf9ddL45PnlapFuu_gBHOM_2dv58217cbRBkUNY67Egbt66oyW9uZG-YV7ITPz71gXURAlkqUNiM2dXXg68aDkDwzmUXuiWxgIVtCH2K-55CZwVX2pY6v4SP-nEqACZOncaS5hMsSvK_jWtf6-f9gSO6aJGRjnX75hYwus8IOcFrsoD9Oq2X_eOtuwC40KrBCZSDIGy7oG7JLCnuHZ-p3r_FHH8qsEYbqiQ8K0ivZve-N6Ip9h0wsZZ92F_7nhklbQogazcnHVYPteQ0VpswPXn29kAQ0lTzxzO6fjyc3GRtEy8xQz_xev8hyhM0lY9zkCYjnFS0iEXUlr3vl1_hDGXiYLWhp0zEU1jIj1oK8is1CElCa1y0iSIDDWlhLf72VXOC_2ozdb8BRUk0BM8GooKG9C_-utcH4F1UVYgz0nKZc7hUJWuEseawo6sXGzZpi8dX-RZMSybYgc3xBo4xWkfJyoK7LAxr42VBRBWn_CK5lYHfSocCamO3q4Ur8mec2d09y0bytHlbkLz9CygMRy50YUaMgy9QlSG4fOuGS",
-                "secret_id": "AKID4-vFHbV-1GLyjDDMB-V8Cwt905ELtBoEgfiO0GLyP_rvd7owhtDyDXqOdjDskadR",
-                "secret_key": "T2dX83P9Bw8Uu5Ap05sJ9SX8ouIEYZr6qVjhEnVN8Ww=",
-                "start_time": "1786333617",
-                "expired_time": "1786376817",
-                "appid": "1258344701",
-                "bucket_name": "ima-media-prod-1258344701",
-                "region": "ap-shanghai",
-                "custom_domain": "ima-media-prod.image.myqcloud.com",
-                "cos_key": "2/I2kYEe4oeHwMPqer5fRfj9A/file_manager/019fe9c7dd997dec980c03ce6cd95931.md"
-            },
-            "content_type": "text/markdown"
+    parser = argparse.ArgumentParser(description="使用 create_media 返回的临时凭证上传文件到 COS（标准库版）")
+    parser.add_argument("--file", required=True, help="待上传的本地文件路径")
+    parser.add_argument("--cos-key", default=os.environ.get("COS_KEY"), help="COS 目标对象键")
+    parser.add_argument("--secret-id", default=os.environ.get("COS_SECRET_ID"), help="COS 临时 SecretId")
+    parser.add_argument("--secret-key", default=os.environ.get("COS_SECRET_KEY"), help="COS 临时 SecretKey")
+    parser.add_argument("--token", default=os.environ.get("COS_TOKEN"), help="COS 临时 Token")
+    parser.add_argument("--bucket", default=os.environ.get("COS_BUCKET", "ima-media-prod-1258344701"), help="COS Bucket")
+    parser.add_argument("--region", default=os.environ.get("COS_REGION", "ap-shanghai"), help="COS Region")
+    parser.add_argument("--start-time", default=os.environ.get("COS_START_TIME"), help="COS 签名开始时间戳")
+    parser.add_argument("--expired-time", default=os.environ.get("COS_EXPIRED_TIME"), help="COS 签名过期时间戳")
+    parser.add_argument("--content-type", default=None, help="文件 MIME 类型（默认根据扩展名推断）")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.file):
+        print(f"ERROR: 文件不存在: {args.file}")
+        sys.exit(1)
+
+    required = {
+        "COS_SECRET_ID": args.secret_id,
+        "COS_SECRET_KEY": args.secret_key,
+        "COS_TOKEN": args.token,
+        "COS_KEY": args.cos_key,
+        "COS_START_TIME": args.start_time,
+        "COS_EXPIRED_TIME": args.expired_time,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        print(f"ERROR: 缺少必要参数/环境变量: {missing}")
+        sys.exit(1)
+
+    content_type = args.content_type
+    if not content_type:
+        ext = os.path.splitext(args.file)[1].lower()
+        content_types = {
+            ".md": "text/markdown",
+            ".pdf": "application/pdf",
+            ".doc": "application/msword",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt": "text/plain",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
         }
-    ]
+        content_type = content_types.get(ext, "application/octet-stream")
 
-    results = []
-    for i, f in enumerate(files):
-        print(f"\n[{i+1}/{len(files)}] Uploading: {f['path'].split(chr(92))[-1]}")
-        print(f"  media_id: {f['media_id']}")
-        success = upload_to_cos(f["path"], f["cos_credential"], f["content_type"])
-        results.append({"file": f["path"], "media_id": f["media_id"], "success": success})
+    print(f"Uploading file: {args.file}")
+    print(f"Bucket: {args.bucket}")
+    print(f"Key: {args.cos_key}")
 
-    print("\n--- Summary ---")
-    for r in results:
-        status = "OK" if r["success"] else "FAILED"
-        print(f"  {status}: {r['file'].split(chr(92))[-1]} -> media_id: {r['media_id']}")
+    with open(args.file, "rb") as f:
+        file_size = len(f.read())
+    print(f"File size: {file_size} bytes")
 
-    # Output media IDs for next step
-    print("\n--- Media IDs for add_knowledge ---")
-    for r in results:
-        if r["success"]:
-            print(f"{r['media_id']}")
+    success = upload_to_cos(
+        args.file, args.secret_id, args.secret_key, args.token,
+        args.bucket, args.region, args.cos_key,
+        args.start_time, args.expired_time, content_type
+    )
+
+    if success:
+        print("SUCCESS: File uploaded to COS!")
+        print("\n下一步：调用 ima-mcp add_knowledge 将 media_id 关联到知识库。")
+    else:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

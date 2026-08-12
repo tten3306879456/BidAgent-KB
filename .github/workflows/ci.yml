@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint:
+    name: 代码检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 检查硬编码凭证
+        run: |
+          # 检查是否存在硬编码的 COS 凭证
+          if grep -r "COS_SECRET_ID.*=.*[a-zA-Z0-9]" --include="*.py" .; then
+            echo "ERROR: 发现硬编码的 COS 凭证"
+            exit 1
+          fi
+          echo "PASS: 未发现硬编码凭证"
+
+      - name: 检查个人信息残留
+        run: |
+          # 检查是否残留个人 KB ID
+          if grep -r "001a9d12b7c0755c" --include="*.py" --include="*.json" --include="*.md" .; then
+            echo "ERROR: 发现个人知识库 ID"
+            exit 1
+          fi
+          echo "PASS: 未发现个人信息残留"
+
+      - name: 检查 JSON 语法
+        run: |
+          python -c "import json; json.load(open('kb_config.json', encoding='utf-8'))"
+          echo "PASS: kb_config.json 语法正确"
+
+      - name: 检查 .env 文件未被提交
+        run: |
+          if git ls-files | grep -E "^\.env$"; then
+            echo "ERROR: .env 文件被提交到了仓库"
+            exit 1
+          fi
+          echo "PASS: .env 文件未被提交"
+
+  python-check:
+    name: Python 脚本检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 语法检查
+        run: |
+          for f in scripts/*.py; do
+            python -m py_compile "$f" && echo "PASS: $f"
+          done

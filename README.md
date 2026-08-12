@@ -51,29 +51,23 @@
 ### 1. 克隆项目
 
 ```bash
-git clone <repo-url>
-cd bid-assistant-system
+git clone https://github.com/tten3306879456/BidAgent-KB.git
+cd BidAgent-KB
 ```
 
-### 2. 一键初始化知识库
+### 2. 搭建知识库（二选一）
 
-```bash
-cd 知识库管理
-python kb_setup.py
-```
+本项目提供两种知识库使用方式，你可以任选其一，也可以两个都用：
 
-> **默认使用本地文件检索后端，零安装零下载，30秒完成初始化。**
+- **方案 A：种子文件随仓库（推荐个人/去中心化使用）**
+- **方案 B：ima 共享知识库（推荐团队协作/社区共享）**
 
-脚本会引导你完成：
-- 选择知识库后端（默认推荐：本地文件检索）
-- 可选安装 PyPDF2（如需检索 PDF 文件）
-- 导入 5 个种子知识文件
-- 验证搜索功能
+详见下方 [知识库搭建指南](#知识库搭建指南)。
 
 ### 3. 创建本地知识库目录
 
 ```bash
-python kb_init.py "D:/KB_manager"
+python scripts/kb_init.py "./kb_data"
 ```
 
 ### 4. 配置 WorkBuddy 专家
@@ -85,7 +79,7 @@ python kb_init.py "D:/KB_manager"
 在 WorkBuddy 对话中召唤专家：
 > "招标解析专家，请帮我解析这份招标文件"
 
-## 知识库后端选择指南
+## 知识库后端选择
 
 | 后端 | 适合谁 | 优点 | 缺点 | 安装难度 |
 |------|--------|------|------|---------|
@@ -95,6 +89,176 @@ python kb_init.py "D:/KB_manager"
 | **ChromaDB** (高级) | 有技术能力的团队 | 语义搜索、完全离线 | 需安装依赖+下载模型 | ⭐⭐⭐⭐ 高 |
 
 切换后端只需修改 `kb_config.json` 中的 `backend.type` 字段。
+
+## 知识库搭建指南
+
+> 核心原则：**法规/标准/废标模式等公开知识可以上云共享；公司资质、人员信息、业绩案例、技术方案、报价策略等敏感数据必须本地保存，严禁上传云端。**
+
+本项目混合使用两类知识库：
+
+| 类型 | 内容 | 敏感度 | 推荐存储位置 |
+|---|---|---|---|
+| 云端共享知识库 | 法规汇编、废标模式、技术标准、资质等效规则 | 低 | ima 云端 |
+| 本地私有知识库 | 公司资质、人员信息、业绩案例、报价方案、技术方案 | 高 | 本地 CSV/文件 |
+
+---
+
+### 方案 A：种子文件随仓库（推荐个人/去中心化使用）
+
+适合：只想本地跑通、不愿注册 ima、或对数据去中心化有要求的用户。
+
+#### 步骤
+
+1. **克隆项目后，种子文件已经在你本地**
+
+   仓库中的 `seeds/` 目录已包含 5 个基础种子文件：
+
+   ```
+   seeds/
+   ├── 废标条款模式库_种子版.md
+   ├── 标书核心法规汇编_v1.0.md
+   ├── 行业技术标准库_种子版.md
+   ├── 招投标报价与商务法规专题库_种子版.md
+   └── 资质等效替代规则库_种子版.md
+   ```
+
+2. **使用本地文件检索后端（零依赖）**
+
+   ```bash
+   cd scripts
+   python kb_setup.py
+   ```
+
+   按提示选择 `local_search` 后端即可。脚本会自动识别 `seeds/` 目录下的 `.md` 文件并建立索引。
+
+3. **验证搜索**
+
+   ```bash
+   python kb_local_search.py "投标保证金"
+   ```
+
+   如果返回法规条文，说明本地知识库已可用。
+
+4. **（可选）注册 ima 并上传到自己的知识库**
+
+   如果你想多端同步或团队共享，可以：
+   - 注册 ima 账号 https://ima.qq.com
+   - 创建个人知识库
+   - 使用本项目的上传脚本将 `seeds/` 文件上传到你的 ima 库
+   - 把你的知识库 ID 填入 `kb_config.json`
+
+---
+
+### 方案 B：ima 共享知识库（推荐团队协作/社区共享）
+
+适合：团队统一维护一套公共知识库，或希望向社区贡献内容的场景。
+
+#### 步骤
+
+1. **创建 ima 共享知识库**
+
+   访问 https://ima.qq.com 或打开 ima.copilot 客户端：
+   - 点击「新建知识库」
+   - 选择「**共享知识库**」
+   - 建议按类别创建 4~5 个库：
+
+     | 共享知识库名称 | 用途 | 对应种子文件 |
+     |---|---|---|
+     | 标书法规库 | 法规条文检索 | 标书核心法规汇编、报价与商务法规专题库 |
+     | 标书案例库 | 废标条款识别 | 废标条款模式库 |
+     | 标书技术标准库 | 技术方案引用 | 行业技术标准库 |
+     | 标书资质规则库 | 资质匹配 | 资质等效替代规则库 |
+
+2. **上传种子文件到 ima 共享库**
+
+   由于 ima 上传需要临时 COS 凭证，流程为：
+
+   ```
+   create_media(MCP工具) → COS上传(Python脚本) → add_knowledge(MCP工具)
+   ```
+
+   具体命令示例（以单文件为例）：
+
+   ```bash
+   cd scripts
+
+   # 1. 复制环境变量模板
+   cp .env.example .env
+
+   # 2. 在 WorkBuddy 中调用 ima create_media 获取临时凭证，填入 .env
+   #    需要填写的字段：COS_SECRET_ID, COS_SECRET_KEY, COS_TOKEN, COS_KEY,
+   #                   COS_START_TIME, COS_EXPIRED_TIME
+
+   # 3. 上传文件
+   python cos_upload.py --file ../seeds/标书核心法规汇编_v1.0.md
+
+   # 4. 在 WorkBuddy 中调用 ima add_knowledge，传入 create_media 返回的 media_id
+   # 5. 上传完成后立即删除 .env
+   rm .env
+   ```
+
+   批量上传可使用 `upload_new_seeds.py`，详见 [scripts/README.md](scripts/README.md)。
+
+3. **把共享知识库 ID 填入项目配置**
+
+   编辑 `kb_config.json`：
+
+   ```json
+   {
+     "backend": {
+       "type": "ima",
+       "ima": {
+         "public_kb_id": "你的共享知识库ID"
+       }
+     }
+   }
+   ```
+
+4. **（可选）向社区开放共享库邀请链接**
+
+   如果你想让其他开源用户也能直接检索这套知识库：
+   - 在 ima 客户端生成共享库邀请链接
+   - 把链接放入 README 或 Discussion 区
+   - 其他用户加入后，即可直接检索
+
+   > ⚠️ 共享库只应包含公开/低敏感的标书知识，**严禁**上传公司私有数据。
+
+---
+
+### 两种方案对比
+
+| 维度 | 方案 A：种子文件随仓库 | 方案 B：ima 共享知识库 |
+|---|---|---|
+| 是否需要 ima 账号 | 否（可选） | 是 |
+| 是否适合团队协作 | 一般 | 优秀 |
+| 知识库版本控制 | 由 Git 管理 | 由 ima 管理 |
+| 多端同步 | 需手动同步 | 自动同步 |
+| 社区贡献难度 | 提交 PR | 加入共享库或提交 PR |
+| 数据隐私 | 完全本地 | 仅公开知识上云 |
+| 推荐使用场景 | 个人试用、开源分发 | 团队、社区、长期维护 |
+
+**建议**：
+- 如果你是项目的普通使用者，先用 **方案 A** 跑通。
+- 如果你是项目维护者或团队负责人，**两个方案都做**：
+  - 种子文件继续随仓库分发，保证开源友好性
+  - 同时维护一个 ima 共享知识库，方便团队和社区检索
+
+---
+
+### 安全提醒
+
+1. **临时 COS 凭证切勿提交到 Git**
+   - 上传脚本 `upload_pdf.py`、`upload_new_seeds.py`、`cos_upload.py` 已从代码中移除所有硬编码凭证。
+   - 凭证应通过环境变量或 `.env` 文件传入，`.env` 已加入 `.gitignore`。
+   - 上传完成后立即删除或清空 `.env`。
+
+2. **敏感数据不上云**
+   - 公司资质、人员信息、业绩案例、报价方案、技术方案等只存本地 CSV/文件。
+   - 向共享库贡献内容前必须先脱敏。
+
+3. **共享知识库成员管理**
+   - 定期检查共享库成员列表，移除不再参与项目的人员。
+   - 不要把共享库链接发布到完全公开的论坛，除非你确认内容可公开。
 
 ## 共享知识库
 
@@ -106,33 +270,78 @@ python kb_init.py "D:/KB_manager"
 | ⚠️ 废标条款模式 | 15条废标识别模式，持续积累 | 所有人 |
 | 📝 标书模板/范文 | 脱敏后的标书范文片段 | 所有人 |
 
-详见 [共享知识库贡献指南](共享知识库贡献指南.md)。
+详见 [共享知识库贡献指南](guides/共享知识库贡献指南.md)。
 
 ## 目录结构
 
 ```
-bid-assistant-system/
+BidAgent-KB/
 ├── README.md                    ← 本文件
-├── 知识库管理/
-│   ├── kb_config.json            ← 配置文件(v3.0)
-│   ├── .env.example              ← 环境变量模板
-│   ├── requirements.txt          ← Python 依赖
-│   ├── kb_setup.py               ← 一键初始化
+├── CHANGELOG.md                 ← 版本变更记录
+├── CONTRIBUTING.md              ← 贡献指南
+├── CODE_OF_CONDUCT.md           ← 行为准则
+├── LICENSE                      ← MIT 许可证
+├── requirements.txt             ← Python 依赖
+├── kb_config.json               ← 知识库配置文件
+├── .env.example                 ← 环境变量模板
+├── .gitignore
+│
+├── docs/                        ← 设计文档与测试报告
+│   ├── 标书智能体专家系统设计.md
+│   ├── 真实招标实例功能测试报告.md
+│   ├── 开源就绪差距分析报告.md
+│   └── ...
+│
+├── expert_prompts/              ← 9 个专家 Prompt（各含 .md + plugin.json + README.md）
+│   ├── bid-analysis-expert/     ← 招标解析专家
+│   ├── tender-review-expert/    ← 招标文件审核专家
+│   ├── resource-matching-expert/← 资源匹配专家
+│   ├── commercial-bid-expert/   ← 商务标书专家
+│   ├── technical-architect-expert/ ← 技术方案架构师
+│   ├── technical-bid-writer-expert/← 技术标书编写专家
+│   ├── technical-review-expert/ ← 技术方案审核专家
+│   ├── bid-review-expert/       ← 投标文件审核专家
+│   └── document-formatting-expert/← 文档排版专家
+│
+├── guides/                      ← 使用指南
+│   ├── 共享知识库贡献指南.md
+│   ├── 知识库使用指南.md
+│   └── 本地知识库搭建指南/      ← 10 个 CSV 模板 + 搭建指南
+│
+├── scripts/                     ← 知识库管理脚本
+│   ├── README.md                ← 脚本使用说明
+│   ├── .env.example             ← COS 上传凭证模板
+│   ├── kb_setup.py              ← 一键初始化
 │   ├── kb_backend.py             ← 后端抽象层
-│   ├── kb_local_search.py        ← 本地检索后端(默认)
-│   ├── kb_ima.py                 ← ima 云端后端
-│   ├── kb_chromadb.py            ← ChromaDB 后端(高级)
-│   ├── kb_auto_index.py          ← 自动索引脚本
-│   ├── kb_sync_manager.py        ← 同步管理脚本
-│   ├── kb_init.py                ← 目录初始化脚本
-│   ├── 共享知识库贡献指南.md       ← 社区贡献指南
-│   └── 知识库使用指南.md           ← 完整使用手册
-├── 知识库种子内容/                 ← 5个.md种子文件
-├── shared_content/               ← 社区共享内容
+│   ├── kb_local_search.py       ← 本地检索后端（默认）
+│   ├── kb_ima.py                ← ima 云端后端
+│   ├── kb_chromadb.py           ← ChromaDB 后端（高级）
+│   ├── kb_auto_index.py         ← 自动索引脚本
+│   ├── kb_sync_manager.py       ← 同步管理脚本
+│   ├── kb_init.py               ← 目录初始化脚本
+│   ├── upload_pdf.py            ← 单文件 COS 上传（SDK 版）
+│   ├── cos_upload.py            ← 单文件 COS 上传（标准库版）
+│   └── upload_new_seeds.py      ← 批量 COS 上传
+│
+├── seeds/                       ← 5 个种子知识文件
+│   ├── 废标条款模式库_种子版.md
+│   ├── 标书核心法规汇编_v1.0.md
+│   ├── 行业技术标准库_种子版.md
+│   ├── 招投标报价与商务法规专题库_种子版.md
+│   └── 资质等效替代规则库_种子版.md
+│
+├── shared_content/              ← 社区共享内容
 │   ├── 标书范文/
 │   └── 贡献者名单.md
-├── expert_prompts/               ← 9个专家Prompt
-└── 本地知识库搭建指南/             ← 搭建指南+CSV模板
+│
+├── .github/                     ← GitHub 模板与 CI
+│   ├── ISSUE_TEMPLATE/          ← Issue 模板
+│   └── workflows/ci.yml         ← GitHub Actions CI
+│
+└── test/                        ← 测试文件
+    ├── 模拟招标文件_尚义县政务平台.md
+    ├── 全流程端到端测试报告.md
+    └── 尚义县政务平台_投标文件.md
 ```
 
 ## 9 个智能体专家
@@ -166,13 +375,16 @@ bid-assistant-system/
 A: 本地文件检索用 Python 内置的正则表达式做关键词匹配，零安装零下载。ChromaDB 用 AI 嵌入模型做语义搜索（搜索"资质不够"能命中"资质等级不达标"），但需要安装依赖和下载模型。建议先从默认后端开始，有需要再升级到 ChromaDB。
 
 **Q: 种子文件是什么？**
-A: 5 个 .md 文件包含了标书领域的基础知识，随项目仓库分发。运行 `kb_setup.py` 会自动导入到你的知识库中。
+A: 5 个 .md 文件包含了标书领域的基础知识，随项目仓库分发。运行 `kb_setup.py` 会自动导入到你的本地知识库。如果你想上云共享，需要自行上传到 ima。
+
+**Q: 我可以直接使用项目维护者的 ima 知识库吗？**
+A: 不可以。ima 知识库绑定个人账号，每个人的知识库 ID 不同。你需要自己创建 ima 知识库并上传种子文件。项目维护者可能会提供一个共享知识库邀请链接，加入后可直接检索。
 
 **Q: 技术方案数据可以上传到云端吗？**
 A: 不可以。技术方案知识库属于 Tier 4 高敏感数据，通过"用户投喂"模式使用。
 
 **Q: 如何向社区贡献内容？**
-A: 详见 [共享知识库贡献指南](共享知识库贡献指南.md)。简单说就是：准备内容 → 脱敏处理 → 提交 PR → 审核合并。
+A: 详见 [共享知识库贡献指南](guides/共享知识库贡献指南.md)。简单说就是：准备内容 → 脱敏处理 → 提交 PR → 审核合并。
 
 **Q: 不使用 WorkBuddy 能用这个系统吗？**
 A: 知识库管理脚本可以独立使用。但 9 个专家智能体需要 WorkBuddy 平台运行。
@@ -183,7 +395,9 @@ MIT License
 
 ## 贡献
 
-欢迎提交 Issue 和 PR！特别是：
+欢迎提交 Issue 和 PR！请阅读 [贡献指南](CONTRIBUTING.md) 和 [行为准则](CODE_OF_CONDUCT.md)。
+
+特别欢迎：
 - 补充更多法规标准到种子库
 - 贡献脱敏标书范文到共享内容
 - 优化检索策略和文档

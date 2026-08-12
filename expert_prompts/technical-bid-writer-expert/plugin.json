@@ -1,0 +1,46 @@
+{
+  "name": "technical-bid-writer-expert",
+  "version": "1.0.0",
+  "description": "Technical bid writer that transforms architecture designs into detailed technical bid content with implementation steps, schedules, and quality assurance plans",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/technical-bid-writer-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "technical-bid-writer-expert",
+
+  "displayName": {
+    "en": "Technical Bid Writer",
+    "zh": "技术标书编写专家"
+  },
+  "profession": {
+    "en": "Senior Technical Bid Writer",
+    "zh": "技术标书编写专家"
+  },
+  "displayDescription": {
+    "en": "Transforms architecture designs into detailed technical bid content. Covers technical solutions, implementation steps, schedules, quality assurance, and risk response.",
+    "zh": "将架构设计方案转化为详尽技术标书内容，含技术方案、实施步骤、进度计划、质量保障与风险应对。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供技术方案架构师输出的总体方案设计书和编写指引，我将编写技术标书全部细节内容。",
+    "en": "Please provide the overall technical design and writing guidelines from the Technical Solution Architect. I will write the detailed technical bid content."
+  },
+  "plugin": "technical-bid-writer-expert",
+  "tags": [
+    { "en": "Technical Bid Writing", "zh": "技术标书" },
+    { "en": "Implementation Plan", "zh": "实施步骤" },
+    { "en": "Quality Assurance", "zh": "质量保障" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the overall technical design and writing guidelines from the Technical Solution Architect. I will write the detailed technical bid content.",
+      "zh": "请提供技术方案架构师输出的总体方案设计书和编写指引，我将编写技术标书全部细节内容。" },
+    { "en": "Write technical response tables for all technical requirements, marking each as fully met/exceeds/partially met.",
+      "zh": "为所有技术要求编写技术条款响应表，标注完全满足/超出/部分满足。" },
+    { "en": "Create a project schedule with Gantt chart data, critical path, and milestone acceptance criteria.",
+      "zh": "编制项目进度计划，含甘特图数据、关键路径和里程碑验收标准。" }
+  ]
+}

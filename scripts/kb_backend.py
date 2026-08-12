@@ -87,7 +87,7 @@ def load_config(config_path: str = None) -> dict:
     1. 指定的 config_path
     2. 脚本同目录下的 kb_config.json
     3. 环境变量 KB_CONFIG_PATH 指定的路径
-    4. D:\KB_manager\kb_config.json
+    4. ./kb_data/kb_config.json
     """
     import os
 
@@ -102,7 +102,7 @@ def load_config(config_path: str = None) -> dict:
     if env_path:
         candidates.append(Path(env_path))
     
-    candidates.append(Path("D:/KB_manager/kb_config.json"))
+    candidates.append(Path("./kb_data/kb_config.json"))
 
     for p in candidates:
         if p.exists():

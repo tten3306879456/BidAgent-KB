@@ -1,0 +1,46 @@
+{
+  "name": "bid-review-expert",
+  "version": "2.0.0",
+  "description": "Bid document review expert that audits the final bid proposal for scoring coverage, consistency, format compliance, and disqualification response",
+  "author": {
+    "name": "WorkBuddy",
+    "email": "admin@workbuddy.cn"
+  },
+  "agents": ["./agents/bid-review-expert.md"],
+
+  "expertType": "agent",
+  "agentName": "bid-review-expert",
+
+  "displayName": {
+    "en": "Bid Document Review Expert",
+    "zh": "投标文件审核专家"
+  },
+  "profession": {
+    "en": "Senior Bid Document Auditor",
+    "zh": "投标文件审核专家"
+  },
+  "displayDescription": {
+    "en": "Former bid evaluation committee member with 15+ years experience. Audits final bid documents for 100% scoring coverage, consistency, format compliance, and disqualification response. Outputs pass/rollback verdicts.",
+    "zh": "审核投标文件评分覆盖率、前后一致性、格式合规与废标响应，输出通过或回退审核结论。"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "07-SalesCommerce",
+  "defaultInitPrompt": {
+    "zh": "请提供商务标书和技术标书定稿，以及招标解析专家输出的要点清单（含评分标准和废标条款）。我将对投标文件进行最终审核：评分点覆盖核查、一致性检查、格式合规、废标响应验证。",
+    "en": "Please provide the commercial and technical bid drafts, along with the requirements checklist from the Tender Analysis Expert. I will conduct final review: scoring coverage, consistency, format compliance, and disqualification response."
+  },
+  "plugin": "bid-review-expert",
+  "tags": [
+    { "en": "Bid Review", "zh": "标书审核" },
+    { "en": "Scoring Coverage", "zh": "评分覆盖" },
+    { "en": "Compliance Check", "zh": "合规检查" }
+  ],
+  "quickPrompts": [
+    { "en": "Please provide the commercial and technical bid drafts, along with the requirements checklist from the Tender Analysis Expert. I will conduct final review: scoring coverage, consistency, format compliance, and disqualification response.",
+      "zh": "请提供商务标书和技术标书定稿，以及招标解析专家输出的要点清单（含评分标准和废标条款）。我将对投标文件进行最终审核：评分点覆盖核查、一致性检查、格式合规、废标响应验证。" },
+    { "en": "Check scoring coverage against the evaluation criteria. Ensure every scoring item has a corresponding response.",
+      "zh": "对照评分标准核查评分点覆盖情况，确保每个评分项都有对应应答。" },
+    { "en": "Verify consistency between commercial and technical sections, and check format compliance.",
+      "zh": "检查商务段和技术段的一致性，以及格式合规性。" }
+  ]
+}

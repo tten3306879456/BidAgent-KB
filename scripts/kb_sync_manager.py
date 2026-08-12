@@ -47,7 +47,7 @@ def _load_config():
                 base = Path(cfg.get("base_path", ""))
                 seed_rel = cfg.get("cloud_seed_dir", r"01_云端知识库\种子文件")
                 log_rel = cfg.get("cloud_log_dir", r"01_云端知识库\同步日志")
-                kb_id = cfg.get("ima_knowledge_base_id", "001a9d12b7c0755c")
+                kb_id = cfg.get("ima_knowledge_base_id", "")
                 if base and base.exists():
                     return {
                         "seed_dir": base / seed_rel,
@@ -60,7 +60,7 @@ def _load_config():
         "seed_dir": Path(__file__).parent.parent / "知识库种子内容",
         "sync_log": Path(__file__).parent / "kb_sync_log.json",
         "sync_result": Path(__file__).parent / "kb_sync_result.json",
-        "kb_id": "001a9d12b7c0755c",
+        "kb_id": "",
     }
 
 _cfg = _load_config()
