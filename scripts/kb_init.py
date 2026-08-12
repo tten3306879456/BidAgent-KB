@@ -23,23 +23,26 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = SCRIPT_DIR.parent
-SEED_SOURCE = PROJECT_ROOT / "知识库种子内容"
-TEMPLATE_SOURCE = PROJECT_ROOT / "本地知识库搭建指南"
-GUIDE_SOURCE = SCRIPT_DIR / "知识库使用指南.md"
+SEED_SOURCE = PROJECT_ROOT / "seeds"
+TEMPLATE_SOURCE = PROJECT_ROOT / "guides" / "本地知识库搭建指南"
+GUIDE_SOURCE = PROJECT_ROOT / "guides" / "知识库使用指南.md"
 
 
 def load_config(config_path=None):
     """加载配置文件"""
     if config_path is None:
-        config_path = SCRIPT_DIR / "kb_config.json"
+        # 优先从项目根目录的 kb_config.json 加载（完整配置）
+        config_path = PROJECT_ROOT / "kb_config.json"
+        if not config_path.exists():
+            # 回退到 scripts 目录
+            config_path = SCRIPT_DIR / "kb_config.json"
     if Path(config_path).exists():
         with open(config_path, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "ima_knowledge_base_id": "",
-        "cloud_seed_dir": r"01_云端知识库\种子文件",
-        "cloud_script_dir": r"01_云端知识库\管理脚本",
-        "cloud_log_dir": r"01_云端知识库\同步日志",
+        "cloud_seed_dir": "01_云端知识库/种子文件",
+        "cloud_script_dir": "01_云端知识库/管理脚本",
+        "cloud_log_dir": "01_云端知识库/同步日志",
         "local_kb_dir": "02_本地知识库",
         "upload_staging_dir": "03_待上传",
         "template_dir": "04_CSV模板",
@@ -54,9 +57,19 @@ def load_config(config_path=None):
         "seed_files": [
             "废标条款模式库_种子版.md",
             "标书核心法规汇编_v1.0.md",
-            "行业技术标准库_种子版.md",
             "招投标报价与商务法规专题库_种子版.md",
             "资质等效替代规则库_种子版.md",
+            "核工业标书知识库_种子版.md",
+            "软件开发标书知识库_种子版.md",
+            "标书法规库_2024-2025新增法规.md",
+            "标书案例库_2024-2025典型案例.md",
+            "行业技术标准_软件开发部分.md",
+            "GBZ117等核工业标准.md",
+            "软件行业标准_2024-2025更新.md",
+            "投标文件通用框架与封面模板.md",
+            "商务标书模板_投标函与响应表.md",
+            "技术标书模板_信息化项目方案框架.md",
+            "评分响应与偏离表模板集.md",
         ],
         "template_files": [
             "公司资质清单_模板.csv",
@@ -71,6 +84,10 @@ def load_config(config_path=None):
             "技术评分要素库_模板.csv",
         ],
         "script_files": [
+            "kb_backend.py",
+            "kb_local_search.py",
+            "kb_ima.py",
+            "kb_setup.py",
             "kb_auto_index.py",
             "kb_sync_manager.py",
             "kb_init.py",
@@ -213,12 +230,15 @@ def main():
             print(f"   如需覆盖: python kb_init.py \"{args.target}\" --force")
             sys.exit(1)
         else:
-            print(f"\n!! 警告: 即将清空目录 {base}")
-            confirm = input("   确认清空？(输入 yes 确认): ")
-            if confirm.lower() != "yes":
-                print("   已取消。")
-                sys.exit(0)
-            shutil.rmtree(base)
+            print(f"\n!! --force 模式: 清空目录 {base}")
+            shutil.rmtree(base, ignore_errors=True)
+            # 如果目录仍然存在（权限/回收站问题），尝试清空内容
+            if base.exists():
+                for item in base.iterdir():
+                    if item.is_dir():
+                        shutil.rmtree(item, ignore_errors=True)
+                    else:
+                        item.unlink(missing_ok=True)
 
     # 1. 创建目录
     create_dirs(base, config)

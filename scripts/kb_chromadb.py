@@ -5,8 +5,8 @@ ChromaDB 本地向量知识库后端
 
 特性:
 - 无需云端账号，完全本地运行
-- 使用 sentence-transformers 本地嵌入模型 (all-MiniLM-L6-v2)
-- 支持 Markdown / PDF / TXT 文件上传
+- 使用 sentence-transformers 本地嵌入模型 (默认 BAAI/bge-large-zh-v1.5)
+- 支持 Markdown / PDF / TXT / Word 文件上传
 - 文档自动分块(chunk) + 向量化 + 存储
 - 语义搜索(非关键词匹配)，更智能
 - 数据持久化到本地磁盘
@@ -14,11 +14,18 @@ ChromaDB 本地向量知识库后端
 依赖:
     pip install chromadb sentence-transformers PyPDF2
 
+嵌入模型说明:
+    - 默认: BAAI/bge-large-zh-v1.5 (~1.3GB, 中文优化, 1024维)
+    - 轻量: sentence-transformers/all-MiniLM-L6-v2 (~90MB, 多语言, 384维)
+    - 首次使用时自动从 HuggingFace 下载模型并缓存到本地
+    - 切换模型后需删除旧 chroma_db 目录重新索引 (向量维度不同)
+
 使用方式:
     from kb_chromadb import ChromaDBBackend
     backend = ChromaDBBackend({
         "persist_directory": "./chroma_db",
         "collection_name": "bid_assistant_kb",
+        "embedding_model": "BAAI/bge-large-zh-v1.5",
     })
     backend.init()
     backend.upload("废标条款模式库_种子版.md")
@@ -51,7 +58,7 @@ class ChromaDBBackend(KBBackend):
             str(Path(__file__).parent / "chroma_db")
         ))
         self.collection_name = config.get("collection_name", "bid_assistant_kb")
-        self.embedding_model = config.get("embedding_model", "all-MiniLM-L6-v2")
+        self.embedding_model = config.get("embedding_model", "BAAI/bge-large-zh-v1.5")
         self.chunk_size = config.get("chunk_size", 500)
         self.chunk_overlap = config.get("chunk_overlap", 50)
 
@@ -71,12 +78,52 @@ class ChromaDBBackend(KBBackend):
             self._client = chromadb.PersistentClient(path=str(self.persist_dir))
         return self._client
 
+    def _get_embedding_function(self):
+        """根据配置创建 ChromaDB 嵌入函数
+        
+        使用 sentence-transformers 作为后端，支持 HuggingFace 上的任意模型。
+        首次调用时自动下载模型并缓存到 ~/.cache/huggingface/hub/
+        
+        Returns:
+            ChromaDB EmbeddingFunction 实例
+        """
+        from chromadb.utils import embedding_functions
+
+        model_name = self.embedding_model
+
+        # 自动补全 HuggingFace 模型路径
+        # 用户可能写 "bge-large-zh-v1.5" 或 "all-MiniLM-L6-v2" 等简写
+        if "/" not in model_name:
+            model_map = {
+                "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+                "all-MiniLM-L12-v2": "sentence-transformers/all-MiniLM-L12-v2",
+                "paraphrase-multilingual-MiniLM-L12-v2": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+                "bge-large-zh-v1.5": "BAAI/bge-large-zh-v1.5",
+                "bge-base-zh-v1.5": "BAAI/bge-base-zh-v1.5",
+                "bge-small-zh-v1.5": "BAAI/bge-small-zh-v1.5",
+                "bge-large-en-v1.5": "BAAI/bge-large-en-v1.5",
+                "m3e-base": "moka-ai/m3e-base",
+                "m3e-large": "moka-ai/m3e-large",
+            }
+            model_name = model_map.get(model_name, f"sentence-transformers/{model_name}")
+
+        return embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name=model_name
+        )
+
     def _get_collection(self):
-        """懒加载 Collection"""
+        """懒加载 Collection
+        
+        根据配置的 embedding_model 创建嵌入函数并传入 Collection。
+        注意: 切换嵌入模型后，向量维度会变化（如 384→1024），
+        需删除旧 chroma_db 目录后重新索引。
+        """
         if self._collection is None:
             client = self._get_client()
+            embedding_function = self._get_embedding_function()
             self._collection = client.get_or_create_collection(
                 name=self.collection_name,
+                embedding_function=embedding_function,
                 metadata={"description": "标书智能体知识库"}
             )
         return self._collection
@@ -120,9 +167,24 @@ class ChromaDBBackend(KBBackend):
             # 创建持久化目录
             self.persist_dir.mkdir(parents=True, exist_ok=True)
 
-            # 初始化集合
-            client = self._get_client()
-            self._get_collection()
+            # 初始化集合（会触发嵌入函数创建和模型下载）
+            try:
+                client = self._get_client()
+                self._get_collection()
+            except Exception as e:
+                # 常见: 切换嵌入模型后向量维度不匹配
+                err_msg = str(e)
+                if "dimension" in err_msg.lower() or "embedding" in err_msg.lower():
+                    return {
+                        "success": False,
+                        "message": (
+                            f"嵌入模型切换导致维度不匹配: {e}\n"
+                            f"请删除旧向量库目录后重新初始化:\n"
+                            f"  rm -rf {self.persist_dir}\n"
+                            f"  python kb_init.py --backend chromadb"
+                        )
+                    }
+                raise
 
             # 加载文件索引
             self._load_file_index()
@@ -133,6 +195,7 @@ class ChromaDBBackend(KBBackend):
             return {
                 "success": True,
                 "message": f"ChromaDB 初始化成功 | 目录: {self.persist_dir} | "
+                           f"嵌入模型: {self.embedding_model} | "
                            f"文件数: {file_count} | 文档块: {chunk_count}"
             }
         except Exception as e:
@@ -494,7 +557,7 @@ class ChromaDBBackend(KBBackend):
             fpath = seed_path / fname
             if not fpath.exists():
                 # 尝试在脚本目录上级找
-                script_seed = Path(__file__).parent.parent / "知识库种子内容" / fname
+                script_seed = Path(__file__).parent.parent / "seeds" / fname
                 if script_seed.exists():
                     fpath = script_seed
                 else:
@@ -534,7 +597,7 @@ if __name__ == "__main__":
     backend = ChromaDBBackend({
         "persist_directory": str(Path(__file__).parent / "chroma_db"),
         "collection_name": "bid_assistant_kb",
-        "embedding_model": "all-MiniLM-L6-v2",
+        "embedding_model": "BAAI/bge-large-zh-v1.5",
         "chunk_size": 500,
         "chunk_overlap": 50,
     })
@@ -550,7 +613,7 @@ if __name__ == "__main__":
 
     # 尝试导入种子文件
     print("\n--- 导入种子文件 ---")
-    seed_dir = str(Path(__file__).parent.parent / "知识库种子内容")
+    seed_dir = str(Path(__file__).parent.parent / "seeds")
     if Path(seed_dir).exists():
         import_result = backend.import_seed_files(seed_dir=seed_dir)
         print(f"导入结果: 成功 {import_result['success']}/{import_result['total']}")

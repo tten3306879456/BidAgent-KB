@@ -85,15 +85,20 @@ def load_config(config_path: str = None) -> dict:
     
     查找顺序:
     1. 指定的 config_path
-    2. 脚本同目录下的 kb_config.json
-    3. 环境变量 KB_CONFIG_PATH 指定的路径
-    4. ./kb_data/kb_config.json
+    2. 项目根目录的 kb_config.json（完整配置）
+    3. 脚本同目录下的 kb_config.json（setup_wizard 生成的最小配置）
+    4. 环境变量 KB_CONFIG_PATH 指定的路径
+    5. ./kb_data/kb_config.json
     """
     import os
 
     candidates = []
     if config_path:
         candidates.append(Path(config_path))
+    
+    # 优先从项目根目录加载（完整配置）
+    project_root = Path(__file__).parent.parent
+    candidates.append(project_root / "kb_config.json")
     
     script_dir = Path(__file__).parent
     candidates.append(script_dir / "kb_config.json")
@@ -162,9 +167,11 @@ def create_backend(config: dict = None, config_path: str = None) -> KBBackend:
         from kb_ima import ImaBackend
         ima_cfg = backend_cfg.get("ima", {})
         local_cfg = backend_cfg.get("local_search", {})
-        # 返回ima后端，但local_search作为本地补充
-        # 简单模式：优先ima，本地作为fallback
-        return ImaBackend(ima_cfg, config) if ima_cfg.get("private_kb_id") or ima_cfg.get("public_kb_id") else LocalSearchBackend(local_cfg, config)
+        # v2.0: 优先 ima（检查 shared_kbs 而非 private_kb_id/public_kb_id），本地作为 fallback
+        if ima_cfg.get("shared_kbs") or ima_cfg.get("private_kb_id") or ima_cfg.get("public_kb_id"):
+            return ImaBackend(ima_cfg, config)
+        else:
+            return LocalSearchBackend(local_cfg, config)
 
     else:
         raise ValueError(f"不支持的后端类型: {backend_type}，请使用 'local_search', 'chromadb', 'ima' 或 'both'")

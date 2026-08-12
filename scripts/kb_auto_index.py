@@ -31,64 +31,106 @@ def _load_config():
     """加载配置文件，支持多种查找路径"""
     search_paths = [
         Path(__file__).parent / "kb_config.json",           # 脚本同目录
-        Path(__file__).parent.parent / "知识库管理" / "kb_config.json",  # 项目内
+        Path(__file__).parent.parent / "kb_config.json",     # 项目根目录
     ]
     for p in search_paths:
         if p.exists():
             with open(p, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
-                base = Path(cfg.get("base_path", ""))
-                seed_rel = cfg.get("cloud_seed_dir", "01_云端知识库\\种子文件")
-                if base and base.exists():
-                    return base / seed_rel
-                # 如果 base_path 不存在，回退到项目目录结构
-                return Path(__file__).parent.parent / "知识库种子内容"
+                base_raw = cfg.get("base_path", "")
+                seed_rel = cfg.get("cloud_seed_dir", "seeds")
+                # v2.0: base_path 为空时回退到项目根目录的 seeds/
+                if base_raw:
+                    base = Path(base_raw)
+                    if base.exists():
+                        return base / seed_rel
+                # base_path 为空，回退到项目根目录的 seeds/
+                seeds_alt = Path(__file__).parent.parent / "seeds"
+                if seeds_alt.exists():
+                    return seeds_alt
+                return Path(__file__).parent.parent / "seeds"
     # 没找到配置文件，用默认路径
-    return Path(__file__).parent.parent / "知识库种子内容"
+    return Path(__file__).parent.parent / "seeds"
 
 KB_BASE = _load_config()
 
 CATEGORIES = {
-    "行业技术标准库": {
-        "file": "行业技术标准库_种子版.md",
-        "keywords": ["GB", "GBZ", "GB/T", "标准", "规范", "技术要求", "防护",
-                      "等保", "安全", "数据", "网络", "云", "软件"],
-        "exclude_keywords": ["废标", "报价", "保证金", "资质替代", "招标投标法"],
-        "section_header": "## {num}、{title}",
-        "template": "standard"
-    },
-    "标书核心法规汇编": {
+    # ── 1. 标书法规库 ──
+    "标书法规库": {
         "file": "标书核心法规汇编_v1.0.md",
+        "files_all": [
+            "标书核心法规汇编_v1.0.md",
+            "招投标报价与商务法规专题库_种子版.md",
+            "标书法规库_2024-2025新增法规.md",
+        ],
         "keywords": ["招标投标法", "政府采购法", "实施条例", "管理办法",
-                      "暂行规定", "条例", "法规", "中华人民共和国"],
-        "exclude_keywords": ["GB", "GBZ", "标准", "报价", "保证金", "资质"],
+                      "条例", "法规", "中华人民共和国", "公平竞争", "审查",
+                      "报价", "保证金", "中小企业", "履约", "付款"],
+        "exclude_keywords": ["废标", "资质替代", "GB/T", "GBZ"],
         "section_header": "## {num}、{title}",
         "template": "law"
     },
-    "废标条款模式库": {
+    # ── 2. 标书案例库 ──
+    "标书案例库": {
         "file": "废标条款模式库_种子版.md",
+        "files_all": [
+            "废标条款模式库_种子版.md",
+            "资质等效替代规则库_种子版.md",
+            "标书案例库_2024-2025典型案例.md",
+        ],
         "keywords": ["废标", "无效投标", "否决投标", "资格不符",
-                      "投标无效", "否决"],
-        "exclude_keywords": ["GB", "标准", "报价", "资质替代"],
+                      "投标无效", "否决", "串通投标", "弄虚作假",
+                      "资质", "认证", "CMMI", "ISO", "等效", "替代"],
+        "exclude_keywords": ["GB/T", "招标投标法", "报价", "保证金"],
         "section_header": "## {num}、{title}",
         "template": "pattern"
     },
-    "报价与商务法规库": {
-        "file": "招投标报价与商务法规专题库_种子版.md",
-        "keywords": ["报价", "保证金", "采购", "合同", "中小企业",
-                      "价格", "商务", "履约", "付款"],
-        "exclude_keywords": ["GB", "GBZ", "标准", "废标", "资质替代"],
+    # ── 3. 投标文件编辑模板库 ──
+    "投标文件编辑模板库": {
+        "file": "投标文件通用框架与封面模板.md",
+        "files_all": [
+            "投标文件通用框架与封面模板.md",
+            "商务标书模板_投标函与响应表.md",
+            "技术标书模板_信息化项目方案框架.md",
+            "评分响应与偏离表模板集.md",
+        ],
+        "keywords": ["模板", "封面", "目录", "投标函", "授权书",
+                      "报价表", "偏离表", "评分", "范文", "框架",
+                      "应答", "响应表", "章节"],
+        "exclude_keywords": ["GB/T", "废标", "招标投标法"],
         "section_header": "## {num}、{title}",
-        "template": "commerce"
+        "template": "template"
     },
-    "资质等效替代规则库": {
-        "file": "资质等效替代规则库_种子版.md",
-        "keywords": ["资质", "认证", "许可", "CMMI", "ISO",
-                      "等效", "替代", "等级", "承包"],
-        "exclude_keywords": ["GB", "标准", "废标", "报价", "招标投标法"],
+    # ── 4. 软件开发标书知识库 ──
+    "软件开发标书知识库": {
+        "file": "软件开发标书知识库_种子版.md",
+        "files_all": [
+            "软件开发标书知识库_种子版.md",
+            "行业技术标准_软件开发部分.md",
+            "软件行业标准_2024-2025更新.md",
+        ],
+        "keywords": ["GB", "GB/T", "标准", "规范", "技术要求",
+                      "等保", "数据安全", "网络", "云", "软件",
+                      "CMMI", "ISO", "信创", "信息安全", "软件开发",
+                      "政务", "信息化", "数据分类", "个人信息"],
+        "exclude_keywords": ["废标", "报价", "保证金", "HAF", "核设施", "放射"],
         "section_header": "## {num}、{title}",
-        "template": "qualification"
-    }
+        "template": "standard"
+    },
+    # ── 5. 核工业标书知识库 ──
+    "核工业标书知识库": {
+        "file": "核工业标书知识库_种子版.md",
+        "files_all": [
+            "核工业标书知识库_种子版.md",
+            "GBZ117等核工业标准.md",
+        ],
+        "keywords": ["HAF", "GBZ", "核", "放射", "辐射", "探伤",
+                      "屏蔽", "核设施", "核安全", "核级", "防护",
+                      "许可", "剂量", "职业卫生"],
+        "exclude_keywords": ["废标", "报价", "保证金", "CMMI", "信创"],
+        "section_header": "## {num}、{title}",
+        "template": "standard"
+    },
 }
 
 # 中文数字映射（用于 .md 文件章节编号）
@@ -389,6 +431,8 @@ class KnowledgeBaseAutoIndexer:
             self.summary_entry = self._gen_commerce_summary()
         elif template == "qualification":
             self.summary_entry = self._gen_qualification_summary()
+        elif template == "template":
+            self.summary_entry = self._gen_template_summary()
         else:
             self.summary_entry = self._gen_generic_summary()
 
@@ -498,6 +542,20 @@ class KnowledgeBaseAutoIndexer:
 | (参照原文) | (参照原文) | (参照原文) | (参照原文) |
 
 > 📄 完整文件已上传至 ima 知识库，文件名: {self.file_name}"""
+
+    def _gen_template_summary(self):
+        """投标文件编辑模板库模板"""
+        title = self.metadata.get("title", self.file_name)
+        scope = self.metadata.get("scope", "投标文件编写相关")
+        return f"""### {title}
+
+**适用场景**: {scope}
+
+| 模板内容 | 使用方法 | 注意事项 |
+|---------|---------|---------|
+| (参照原文) | (参照原文) | (参照原文) |
+
+> 📄 完整模板已上传至 ima 知识库，文件名: {self.file_name}"""
 
     def _gen_generic_summary(self):
         """通用模板"""

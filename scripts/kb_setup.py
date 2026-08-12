@@ -190,24 +190,35 @@ def init_ima(config):
     print("  3. 如果不使用 WorkBuddy，请在 .env 中配置认证信息")
     print()
 
-    public_id = config.get("backend", {}).get("ima", {}).get("public_kb_id", "")
-    private_id = config.get("backend", {}).get("ima", {}).get("private_kb_id", "")
+    ima_cfg = config.get("backend", {}).get("ima", {})
+    shared_kbs = ima_cfg.get("shared_kbs", {})
+    public_id = ima_cfg.get("public_kb_id", "")
+    private_id = ima_cfg.get("private_kb_id", "")
+
+    # v2.0: 显示共享知识库配置
+    if shared_kbs:
+        print(f"  [OK] 已配置 {len(shared_kbs)} 座共享知识库:")
+        for name, kb_id in shared_kbs.items():
+            print(f"       {name}: {kb_id}")
+        print()
+    else:
+        print("  [INFO] 共享知识库未配置")
+        print("         请在 kb_config.json 的 backend.ima.shared_kbs 中填入各 KB ID")
+        print()
 
     if public_id:
         print(f"  [OK] 公共知识库 ID: {public_id}")
-    else:
-        print("  [INFO] 公共知识库 ID 未配置")
-        print("         请从开源项目README获取公共库ID并填入配置")
-
     if private_id:
         print(f"  [OK] 私有知识库 ID: {private_id}")
-    else:
-        print("  [INFO] 私有知识库 ID 未配置")
+
+    if not shared_kbs and not public_id and not private_id:
+        print("  [INFO] 公共/私有知识库 ID 均未配置")
         print("         请创建你的 ima 知识库后，将 ID 填入配置")
 
     print()
     print("  [INFO] ima 后端初始化完成")
     print("         种子文件通过 WorkBuddy 对话上传到 ima 知识库")
+    print("         智能体会自动根据文件名路由到正确的知识库")
 
     return True, None
 
@@ -216,7 +227,9 @@ def write_config(backend_type, config):
     """写入最终配置"""
     print_header("Step 5: 写入配置文件")
 
-    config_path = SCRIPT_DIR / "kb_config.json"
+    # 优先写入项目根目录的 kb_config.json（与完整配置合并）
+    project_root = SCRIPT_DIR.parent
+    config_path = project_root / "kb_config.json"
 
     if config_path.exists():
         with open(config_path, "r", encoding="utf-8") as f:

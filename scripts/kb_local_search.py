@@ -52,16 +52,24 @@ class LocalSearchBackend:
         self.backend_cfg = backend_cfg or {}
 
         # 根目录：优先用 backend 配置，其次用 full_config 的 base_path
-        self.index_dir = Path(self.backend_cfg.get(
-            "index_directory",
-            self.full_config.get("base_path", "./kb_data")
-        )) / self.full_config.get("cloud_seed_dir", "01_云端知识库/种子文件").replace("\\", "/")
+        base_path = self.full_config.get("base_path", "")
+        cloud_seed_dir = self.full_config.get("cloud_seed_dir", "01_云端知识库/种子文件").replace("\\", "/")
+
+        if base_path:
+            self.index_dir = Path(base_path) / cloud_seed_dir
+        else:
+            # base_path 为空时，回退到项目根目录的 seeds/
+            project_seeds = Path(__file__).parent.parent / "seeds"
+            if project_seeds.exists():
+                self.index_dir = project_seeds
+            else:
+                self.index_dir = Path("./kb_data") / cloud_seed_dir
 
         # 索引文件
-        index_file_dir = Path(self.backend_cfg.get(
-            "index_directory",
-            self.full_config.get("base_path", "./kb_data")
-        )) / self.full_config.get("cloud_log_dir", "01_云端知识库/同步日志").replace("\\", "/")
+        if base_path:
+            index_file_dir = Path(base_path) / self.full_config.get("cloud_log_dir", "01_云端知识库/同步日志").replace("\\", "/")
+        else:
+            index_file_dir = Path(__file__).parent.parent / "kb_data" / self.full_config.get("cloud_log_dir", "01_云端知识库/同步日志").replace("\\", "/")
         self.index_file = index_file_dir / "local_search_index.json"
         index_file_dir.mkdir(parents=True, exist_ok=True)
 

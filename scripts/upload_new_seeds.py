@@ -13,7 +13,7 @@
 manifest.json 示例:
     [
       {
-        "path": "D:/BidAgent-KB/seeds/行业技术标准库_种子版.md",
+        "path": "D:/BidAgent-KB/seeds/标书核心法规汇编_v1.0.md",
         "media_id": "markdown_...",
         "cos_credential": {
           "secret_id": "...",

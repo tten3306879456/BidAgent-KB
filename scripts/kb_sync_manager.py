@@ -35,32 +35,62 @@ from pathlib import Path
 # ============================================================
 
 def _load_config():
-    """加载配置文件，支持多种查找路径"""
+    """加载配置文件，支持多种查找路径
+
+    v2.0: 从 backend.ima.shared_kbs 读取 5 座共享知识库 ID 映射
+    """
     search_paths = [
         Path(__file__).parent / "kb_config.json",           # 脚本同目录
-        Path(__file__).parent.parent / "知识库管理" / "kb_config.json",  # 项目内
+        Path(__file__).parent.parent / "kb_config.json",     # 项目根目录
     ]
     for p in search_paths:
         if p.exists():
             with open(p, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
-                base = Path(cfg.get("base_path", ""))
-                seed_rel = cfg.get("cloud_seed_dir", r"01_云端知识库\种子文件")
-                log_rel = cfg.get("cloud_log_dir", r"01_云端知识库\同步日志")
-                kb_id = cfg.get("ima_knowledge_base_id", "")
+                base_raw = cfg.get("base_path", "")
+                base = Path(base_raw) if base_raw else None
+                seed_rel = cfg.get("cloud_seed_dir", "01_云端知识库/种子文件")
+                log_rel = cfg.get("cloud_log_dir", "01_云端知识库/同步日志")
+                # v2.0: 从 backend.ima.shared_kbs 读取共享知识库映射
+                ima_cfg = cfg.get("backend", {}).get("ima", {})
+                shared_kbs = ima_cfg.get("shared_kbs", {})
+                # 兼容旧配置
+                old_kb_id = cfg.get("ima_knowledge_base_id", "") or ima_cfg.get("private_kb_id", "")
+                # 构建文件→KB 映射（从 shared_content.categories）
+                file_to_kb = {}
+                categories = cfg.get("shared_content", {}).get("categories", {})
+                for cat_id, cat in categories.items():
+                    kb_name = cat.get("name", cat_id)
+                    kb_id = cat.get("kb_id", "")
+                    for fname in cat.get("files", []):
+                        file_to_kb[fname] = (kb_name, kb_id)
                 if base and base.exists():
                     return {
                         "seed_dir": base / seed_rel,
                         "sync_log": base / log_rel / "kb_sync_log.json",
                         "sync_result": base / log_rel / "kb_sync_result.json",
-                        "kb_id": kb_id,
+                        "shared_kbs": shared_kbs,
+                        "default_kb_id": old_kb_id,
+                        "file_to_kb": file_to_kb,
                     }
+                # base_path 为空时，尝试项目根目录的 seeds/
+                seeds_alt = Path(__file__).parent.parent / "seeds"
+                return {
+                    "seed_dir": seeds_alt if seeds_alt.exists() else Path(".") / seed_rel,
+                    "sync_log": Path(__file__).parent / "kb_sync_log.json",
+                    "sync_result": Path(__file__).parent / "kb_sync_result.json",
+                    "shared_kbs": shared_kbs,
+                    "default_kb_id": old_kb_id,
+                    "file_to_kb": file_to_kb,
+                }
     # 没找到配置文件，用默认路径
     return {
-        "seed_dir": Path(__file__).parent.parent / "知识库种子内容",
+        "seed_dir": Path(__file__).parent.parent / "seeds",
         "sync_log": Path(__file__).parent / "kb_sync_log.json",
         "sync_result": Path(__file__).parent / "kb_sync_result.json",
-        "kb_id": "",
+        "shared_kbs": {},
+        "default_kb_id": "",
+        "file_to_kb": {},
     }
 
 _cfg = _load_config()
@@ -68,10 +98,22 @@ SCRIPT_DIR = Path(__file__).parent
 SEED_DIR = _cfg["seed_dir"]
 SYNC_LOG = _cfg["sync_log"]
 SYNC_RESULT = _cfg["sync_result"]
-KB_ID = _cfg["kb_id"]
+SHARED_KBS = _cfg["shared_kbs"]
+DEFAULT_KB_ID = _cfg["default_kb_id"]
+FILE_TO_KB = _cfg["file_to_kb"]
 
 # 跳过的非种子文件
 SKIP_FILES = {"ima建库操作指引.md"}
+
+
+def get_kb_for_file(filename):
+    """根据文件名获取对应的 KB 信息
+
+    Returns: (kb_name, kb_id) 或 (None, DEFAULT_KB_ID)
+    """
+    if filename in FILE_TO_KB:
+        return FILE_TO_KB[filename]
+    return (None, DEFAULT_KB_ID)
 
 
 # ============================================================
@@ -190,7 +232,12 @@ def cmd_check():
     print(f"  知识库同步检查报告")
     print(f"  检查时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  种子目录: {SEED_DIR}")
-    print(f"  知识库ID: {KB_ID}")
+    if SHARED_KBS:
+        print(f"  共享知识库 ({len(SHARED_KBS)} 座):")
+        for name, kb_id in SHARED_KBS.items():
+            print(f"    {name}: {kb_id}")
+    else:
+        print(f"  知识库ID: {DEFAULT_KB_ID or '(未配置)'}")
     print(f"{'=' * 60}")
     print(f"\n  文件总数: {total}")
     print(f"  需要同步: {len(needs_sync) + len(new_files)}")
@@ -231,7 +278,8 @@ def cmd_check():
         "needs_sync": len(needs_sync) + len(new_files),
         "up_to_date": len(up_to_date),
         "files_to_sync": new_files + needs_sync,
-        "kb_id": KB_ID
+        "shared_kbs": SHARED_KBS,
+        "file_to_kb": {f: v[1] for f, v in FILE_TO_KB.items()},
     }
     
     result_path = SYNC_RESULT
@@ -250,19 +298,19 @@ def cmd_status():
     log = load_sync_log()
     md_files = scan_md_files()
 
-    print(f"\n{'=' * 70}")
+    print(f"\n{'=' * 85}")
     print(f"  知识库同步状态总览")
-    print(f"{'=' * 70}")
-    print(f"  {'文件名':<40} {'状态':<10} {'上次同步':<20} {'大小':<10}")
-    print(f"  {'─' * 66}")
+    print(f"{'=' * 85}")
+    print(f"  {'文件名':<36} {'状态':<10} {'知识库':<20} {'上次同步':<16}")
+    print(f"  {'─' * 81}")
 
     for f in md_files:
         current_hash = get_file_hash(f)
-        size = get_file_size(f)
 
         if f.name not in log["files"]:
             status = "NEW"
             last_synced = "从未"
+            kb_display = get_kb_for_file(f.name)[0] or "-"
         else:
             entry = log["files"][f.name]
             if entry.get("hash") != current_hash:
@@ -270,15 +318,18 @@ def cmd_status():
             else:
                 status = "SYNCED"
             last_synced = format_time(entry.get("last_synced"))
+            kb_display = entry.get("kb_name") or get_kb_for_file(f.name)[0] or "-"
 
         # 截断文件名
-        display_name = f.name[:38] + ".." if len(f.name) > 40 else f.name
-        print(f"  {display_name:<40} {status:<10} {last_synced:<20} {size:<10}")
+        display_name = f.name[:34] + ".." if len(f.name) > 36 else f.name
+        print(f"  {display_name:<36} {status:<10} {kb_display:<20} {last_synced:<16}")
 
     last_full = format_time(log.get("last_full_sync"))
     print(f"\n  上次完整同步: {last_full}")
     print(f"  同步日志: {SYNC_LOG}")
-    print(f"{'=' * 70}\n")
+    if SHARED_KBS:
+        print(f"  共享知识库: {len(SHARED_KBS)} 座")
+    print(f"{'=' * 85}\n")
 
 
 def cmd_mark(filename):
@@ -301,15 +352,22 @@ def cmd_mark(filename):
     current_hash = get_file_hash(filepath)
     now = datetime.datetime.now().isoformat()
 
+    # 获取该文件对应的 KB 信息
+    kb_name, kb_id = get_kb_for_file(filename)
+
     log["files"][filename] = {
         "hash": current_hash,
         "last_synced": now,
         "path": str(filepath),
+        "kb_name": kb_name or "",
+        "kb_id": kb_id or "",
         "sync_count": log.get("files", {}).get(filename, {}).get("sync_count", 0) + 1
     }
 
     save_sync_log(log)
+    kb_display = f"{kb_name} ({kb_id})" if kb_name else kb_id or "(未配置)"
     print(f"OK: 已标记 '{filename}' 为已同步")
+    print(f"     目标知识库: {kb_display}")
     print(f"     同步时间: {format_time(now)}")
     print(f"     文件哈希: {current_hash[:16]}...")
     print(f"     累计同步: {log['files'][filename]['sync_count']} 次")
@@ -325,10 +383,13 @@ def cmd_mark_all():
 
     for f in md_files:
         current_hash = get_file_hash(f)
+        kb_name, kb_id = get_kb_for_file(f.name)
         log["files"][f.name] = {
             "hash": current_hash,
             "last_synced": now,
             "path": str(f),
+            "kb_name": kb_name or "",
+            "kb_id": kb_id or "",
             "sync_count": log.get("files", {}).get(f.name, {}).get("sync_count", 0) + 1
         }
         count += 1
@@ -441,7 +502,11 @@ def cmd_upload(file_path, creds_json):
         print(f"  ETag: {etag}")
         if "media_id" in creds:
             print(f"  media_id: {creds['media_id']}")
-            print(f"\n下一步: 调用 add_knowledge(media_id='{creds['media_id']}', knowledge_base_id='{KB_ID}')")
+            # v2.0: 从凭证或文件名映射获取 KB ID
+            _, target_kb = get_kb_for_file(file_path.name)
+            kb_display = target_kb or "(从凭证获取)"
+            print(f"\n下一步: 调用 add_knowledge(media_id='{creds['media_id']}', knowledge_base_id='{target_kb}')")
+            print(f"  目标知识库: {kb_display}")
         return True
     except Exception as e:
         print(f"\nFAILED: 上传失败: {e}")
@@ -468,7 +533,7 @@ def print_usage():
 示例:
   python kb_sync_manager.py check
   python kb_sync_manager.py status
-  python kb_sync_manager.py mark 行业技术标准库_种子版.md
+  python kb_sync_manager.py mark 标书核心法规汇编_v1.0.md
   python kb_sync_manager.py mark-all
   python kb_sync_manager.py upload "D:\\path\\to\\file.md" '{"secret_id":"...","secret_key":"...","token":"...","bucket":"...","region":"...","cos_key":"...","media_id":"..."}'
 """)
