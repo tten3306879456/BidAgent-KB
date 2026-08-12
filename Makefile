@@ -7,6 +7,8 @@
 #   make check       — 检查环境
 #   make test        — 运行验证测试
 #   make search      — 搜索知识库 (make search Q="投标保证金")
+#   make console     — 启动管理控制台(覆盖度分析+上传+配置)
+#   make coverage    — 输出知识库覆盖度分析报告
 #   make channels    — 列出已配置渠道
 #   make test-channel — 测试渠道连接 (make test-channel C=feishu)
 #   make send        — 发送消息 (make send MSG="测试消息")
@@ -56,6 +58,20 @@ kb-setup:
 search:
 	@if [ -z "$(Q)" ]; then echo "用法: make search Q=\"关键词\""; exit 1; fi
 	$(PYTHON) $(SCRIPTS)/kb_local_search.py "$(Q)"
+
+# ============================================================
+# 管理控制台命令
+# ============================================================
+
+.PHONY: console coverage
+
+## 启动管理控制台(覆盖度分析+文件上传+参数配置)
+console:
+	$(PYTHON) $(SCRIPTS)/kb_console.py
+
+## 输出知识库覆盖度分析报告(不启动服务器)
+coverage:
+	$(PYTHON) $(SCRIPTS)/kb_console.py --check
 
 # ============================================================
 # 渠道命令
@@ -144,6 +160,8 @@ help:
 	@echo "  make kb-init      初始化本地知识库目录"
 	@echo "  make kb-setup     初始化知识库后端"
 	@echo "  make search Q=\"关键词\"  搜索知识库"
+	@echo "  make console      启动管理控制台(浏览器)"
+	@echo "  make coverage     输出覆盖度分析报告"
 	@echo ""
 	@echo "渠道命令:"
 	@echo "  make channels     列出已配置渠道"

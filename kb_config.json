@@ -168,7 +168,8 @@
     "kb_sync_manager.py",
     "kb_init.py",
     "channel_notify.py",
-    "setup_wizard.py"
+    "setup_wizard.py",
+    "kb_console.py"
   ],
   "script_files_advanced": [
     "kb_chromadb.py"
