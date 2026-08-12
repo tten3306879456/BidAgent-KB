@@ -192,12 +192,25 @@ REQUIRED_ENVS = [
     {"key": "COS_SECRET_KEY", "label": "腾讯云密钥Key", "required": True, "description": "腾讯云 COS SecretKey（用于文件上传，可选）"},
 ]
 
-# 4 个渠道配置
+# 4 个渠道配置（字段名必须与 channel_notify.py 中的 CHANNEL_KEYS 一致）
 CHANNELS = {
-    "feishu": {"name": "飞书", "icon": "🐦", "fields": ["FEISHU_WEBHOOK", "FEISHU_SECRET"]},
-    "dingtalk": {"name": "钉钉", "icon": "💬", "fields": ["DINGTALK_WEBHOOK", "DINGTALK_SECRET"]},
+    "feishu": {"name": "飞书", "icon": "🐦", "fields": ["FEISHU_WEBHOOK_URL", "FEISHU_BOT_SECRET"]},
+    "dingtalk": {"name": "钉钉", "icon": "💬", "fields": ["DINGTALK_WEBHOOK_URL", "DINGTALK_APP_SECRET"]},
     "wecom": {"name": "企业微信", "icon": "💼", "fields": ["WECOM_CORP_ID", "WECOM_AGENT_ID", "WECOM_CORP_SECRET"]},
     "wechat": {"name": "微信", "icon": "💚", "fields": ["WECHAT_APP_ID", "WECHAT_APP_SECRET"]},
+}
+
+# 渠道字段的友好标签和提示（用于前端 placeholder / title）
+CHANNEL_FIELD_HINTS = {
+    "FEISHU_WEBHOOK_URL": "飞书机器人 Webhook 地址",
+    "FEISHU_BOT_SECRET": "飞书机器人加签 Secret（未开启签名校验可留空）",
+    "DINGTALK_WEBHOOK_URL": "钉钉机器人 Webhook 地址",
+    "DINGTALK_APP_SECRET": "钉钉机器人加签密钥 SECxxx（未开启签名校验可留空）",
+    "WECOM_CORP_ID": "企业 ID (wwxxxxxxxxxxxx)",
+    "WECOM_AGENT_ID": "应用 Agent ID",
+    "WECOM_CORP_SECRET": "应用 Secret",
+    "WECHAT_APP_ID": "微信公众号 App ID",
+    "WECHAT_APP_SECRET": "微信公众号 App Secret",
 }
 
 
@@ -674,6 +687,19 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); }
 let coverageData = null;
 let currentTarget = 'seeds';
 
+// 渠道字段友好提示（与 Python 端的 CHANNEL_FIELD_HINTS 保持一致）
+const FIELD_HINTS = {
+  "FEISHU_WEBHOOK_URL": "飞书机器人 Webhook 地址",
+  "FEISHU_BOT_SECRET": "飞书机器人加签 Secret（未开启签名校验可留空）",
+  "DINGTALK_WEBHOOK_URL": "钉钉机器人 Webhook 地址",
+  "DINGTALK_APP_SECRET": "钉钉机器人加签密钥 SECxxx（未开启签名校验可留空）",
+  "WECOM_CORP_ID": "企业 ID (wwxxxxxxxxxxxx)",
+  "WECOM_AGENT_ID": "应用 Agent ID",
+  "WECOM_CORP_SECRET": "应用 Secret",
+  "WECHAT_APP_ID": "微信公众号 App ID",
+  "WECHAT_APP_SECRET": "微信公众号 App Secret",
+};
+
 // ========== 页面切换 ==========
 function switchPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -950,8 +976,11 @@ function renderChannels(channels) {
     html += '<div class="channel-header"><div class="channel-name">' + ch.icon + ' ' + ch.name + '</div>';
     html += '<div class="channel-toggle' + (isActive ? ' active' : '') + '" onclick="toggleChannel(\'' + ch.key + '\')"></div></div>';
     ch.fields.forEach(f => {
+      const hint = FIELD_HINTS[f.key] || f.key;
+      const isSecret = f.key.includes('SECRET') || f.key.includes('TOKEN');
+      const inputType = isSecret ? 'password' : 'text';
       html += '<div class="form-group" style="margin-bottom:8px;">';
-      html += '<input type="text" class="form-input" id="ch-' + f.key + '" value="' + (f.value || '') + '" placeholder="' + f.key + '" style="font-size:13px;">';
+      html += '<input type="' + inputType + '" class="form-input" id="ch-' + f.key + '" value="' + (f.value || '') + '" placeholder="' + hint + '" title="' + hint + '" style="font-size:13px;">';
       html += '</div>';
     });
     html += '</div>';

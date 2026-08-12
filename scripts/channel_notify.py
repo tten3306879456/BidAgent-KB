@@ -13,10 +13,9 @@
   - 微信公众号 (WeChat OA) — 客服消息推送 (access_token)
 
 环境变量:
-  飞书:
-    FEISHU_APP_ID          飞书应用 App ID (cli_xxxxxxxxxxxx)
-    FEISHU_APP_SECRET      飞书应用 App Secret
-    FEISHU_WEBHOOK_URL     飞书机器人 Webhook 地址
+  飞书 (Webhook 机器人):
+    FEISHU_WEBHOOK_URL     飞书机器人 Webhook 地址 (必填)
+    FEISHU_BOT_SECRET      飞书机器人「签名校验」密钥 (如未开启签名校验可留空)
 
   钉钉:
     DINGTALK_APP_KEY       钉钉应用 App Key (dingxxxxxxxxx)
@@ -48,13 +47,13 @@
   python channel_notify.py send "消息内容" --channel dingtalk
 
   # CLI — 动态更新凭证（内存中）
-  python channel_notify.py update feishu FEISHU_APP_ID=cli_new FEISHU_APP_SECRET=new_secret
+  python channel_notify.py update feishu FEISHU_WEBHOOK_URL=https://... FEISHU_BOT_SECRET=xxx
 
   # CLI — 更新凭证并持久化到 .env
   python channel_notify.py update feishu FEISHU_WEBHOOK_URL=https://... --save
 
   # CLI — 更新后立即测试连接
-  python channel_notify.py update feishu FEISHU_APP_SECRET=new --test
+  python channel_notify.py update feishu FEISHU_BOT_SECRET=new --test
 
   # 模块导入 — 发送消息
   from channel_notify import load_notifiers, notify_all
@@ -63,7 +62,7 @@
   # 模块导入 — 运行时动态更新凭证（无需重启）
   from channel_notify import load_notifiers, update_channel
   notifiers = load_notifiers()
-  result = update_channel("feishu", {"FEISHU_APP_SECRET": "new_secret"}, notifiers)
+  result = update_channel("feishu", {"FEISHU_BOT_SECRET": "new_secret"}, notifiers)
   # 旧 access_token 缓存自动清除，下次调用自动获取新 token
 """
 
@@ -146,7 +145,7 @@ class ChannelNotifier(ABC):
     display_name: str = "抽象渠道"
 
     def __init__(self, config: dict):
-        """config 为该渠道的环境变量字典，如 {"FEISHU_APP_ID": "...", ...}"""
+        """config 为该渠道的环境变量字典，如 {"FEISHU_WEBHOOK_URL": "...", ...}"""
         self.config = config
         self.enabled = config.get("enabled", False)
 
@@ -187,7 +186,7 @@ class ChannelNotifier(ABC):
 
         Args:
             new_config: 新配置字典，只需包含要更新的字段，如:
-                {"FEISHU_APP_ID": "new_id", "FEISHU_APP_SECRET": "new_secret"}
+                {"FEISHU_WEBHOOK_URL": "https://...", "FEISHU_BOT_SECRET": "new_secret"}
                 也可包含 "enabled": True/False 来切换启用状态。
 
         Returns:
@@ -248,7 +247,7 @@ class ChannelNotifier(ABC):
 # ============================================================
 
 class FeishuNotifier(ChannelNotifier):
-    """飞书渠道通知器 — 通过 Webhook 机器人推送消息"""
+    """飞书渠道通知器 — 通过 Webhook 机器人推送消息（支持加签验签）"""
 
     channel_name = "feishu"
     display_name = "飞书"
@@ -258,31 +257,50 @@ class FeishuNotifier(ChannelNotifier):
         self._apply_config()
 
     def _apply_config(self):
-        self.app_id = self.config.get("FEISHU_APP_ID", "").strip()
-        self.app_secret = self.config.get("FEISHU_APP_SECRET", "").strip()
         self.webhook_url = self.config.get("FEISHU_WEBHOOK_URL", "").strip()
+        self.bot_secret = self.config.get("FEISHU_BOT_SECRET", "").strip()
 
     def _get_required_fields(self) -> list:
         filled = []
-        if self.app_id:
-            filled.append("FEISHU_APP_ID")
-        if self.app_secret:
-            filled.append("FEISHU_APP_SECRET")
         if self.webhook_url:
             filled.append("FEISHU_WEBHOOK_URL")
+        if self.bot_secret:
+            filled.append("FEISHU_BOT_SECRET")
         return filled
 
     def is_configured(self) -> bool:
         # 飞书至少需要 webhook_url 才能推送
         return self.enabled and bool(self.webhook_url)
 
+    def _build_signed_url(self) -> str:
+        """如果配置了机器人加签 Secret，对 Webhook URL 进行加签。
+
+        飞书加签算法:
+            timestamp = str(round(time.time()))
+            string_to_sign = f"{timestamp}\n{secret}"
+            sign = base64(hmac_sha256(secret, string_to_sign))
+            url 追加 ?timestamp=...&sign=...
+        """
+        if not self.bot_secret:
+            return self.webhook_url
+        timestamp = str(round(time.time()))
+        string_to_sign = f"{timestamp}\n{self.bot_secret}"
+        hmac_code = hmac.new(
+            self.bot_secret.encode("utf-8"),
+            string_to_sign.encode("utf-8"),
+            digestmod=hashlib.sha256
+        ).digest()
+        sign = base64.b64encode(hmac_code).decode("utf-8")
+        separator = "&" if "?" in self.webhook_url else "?"
+        return f"{self.webhook_url}{separator}timestamp={timestamp}&sign={sign}"
+
     def test_connection(self) -> dict:
         if not self.is_configured():
             return {"success": False, "message": "飞书渠道未配置 Webhook URL"}
-        # 发送测试消息
         result = self.send_text("🔧 渠道连接测试 — 飞书机器人已就绪", "连接测试")
         if result["success"]:
-            return {"success": True, "message": f"飞书 Webhook 连接成功 (App ID: {self.app_id[:8]}***)"}
+            sign_info = " (已加签)" if self.bot_secret else " (未加签)"
+            return {"success": True, "message": f"飞书 Webhook 连接成功{sign_info}"}
         return result
 
     def send_text(self, content: str, title: str = None) -> dict:
@@ -292,7 +310,7 @@ class FeishuNotifier(ChannelNotifier):
             "msg_type": "text",
             "content": {"text": content}
         }
-        resp = _http_post_json(self.webhook_url, payload)
+        resp = _http_post_json(self._build_signed_url(), payload)
         return self._parse_response(resp)
 
     def send_markdown(self, content: str, title: str = None) -> dict:
@@ -309,7 +327,7 @@ class FeishuNotifier(ChannelNotifier):
                 ]
             }
         }
-        resp = _http_post_json(self.webhook_url, payload)
+        resp = _http_post_json(self._build_signed_url(), payload)
         return self._parse_response(resp)
 
     def _parse_response(self, resp: dict) -> dict:
@@ -679,7 +697,7 @@ CHANNEL_CLASSES = {
 
 # 各渠道需要读取的环境变量名
 CHANNEL_ENV_KEYS = {
-    "feishu": ["FEISHU_APP_ID", "FEISHU_APP_SECRET", "FEISHU_WEBHOOK_URL"],
+    "feishu": ["FEISHU_WEBHOOK_URL", "FEISHU_BOT_SECRET"],
     "dingtalk": ["DINGTALK_APP_KEY", "DINGTALK_APP_SECRET", "DINGTALK_WEBHOOK_URL"],
     "wecom": ["WECOM_CORP_ID", "WECOM_AGENT_ID", "WECOM_SECRET"],
     "wechat": ["WECHAT_APP_ID", "WECHAT_APP_SECRET", "WECHAT_TOKEN", "WECHAT_ENCODING_AES_KEY"],
@@ -785,7 +803,7 @@ def update_channel(channel: str, new_config: dict,
     Args:
         channel: 渠道名 (feishu / dingtalk / wecom / wechat)
         new_config: 新配置字典，只需包含要更新的字段，如:
-            {"FEISHU_APP_ID": "new_id", "FEISHU_APP_SECRET": "new_secret"}
+            {"FEISHU_WEBHOOK_URL": "https://...", "FEISHU_BOT_SECRET": "new_secret"}
             也可包含 "enabled": True/False
         notifiers: 已有的通知器列表。如果为 None 则从环境变量加载。
             传入的列表会被原地修改（新增或更新元素）。
@@ -836,7 +854,7 @@ def load_notifiers_from_agent_config(config_path: str = None) -> list:
     
     agent_config.json 的 channels 字段格式:
     {
-      "feishu": {"enabled": true, "FEISHU_APP_ID": "...", ...},
+      "feishu": {"enabled": true, "FEISHU_WEBHOOK_URL": "...", "FEISHU_BOT_SECRET": "..."},
       "dingtalk": {"enabled": false, ...},
       ...
     }
@@ -1004,9 +1022,9 @@ def main():
   python channel_notify.py send "消息" --markdown    以 Markdown 格式发送
   python channel_notify.py list                      列出已配置的渠道
   python channel_notify.py send "消息" --touser openid  指定微信接收人
-  python channel_notify.py update feishu FEISHU_APP_ID=cli_new FEISHU_APP_SECRET=new_secret
+  python channel_notify.py update feishu FEISHU_WEBHOOK_URL=https://... FEISHU_BOT_SECRET=xxx
   python channel_notify.py update feishu FEISHU_WEBHOOK_URL=https://... --test
-  python channel_notify.py update feishu FEISHU_APP_SECRET=new --save  持久化到 .env
+  python channel_notify.py update feishu FEISHU_BOT_SECRET=new --save  持久化到 .env
         """,
     )
 
@@ -1038,7 +1056,7 @@ def main():
                                choices=["feishu", "dingtalk", "wecom", "wechat"],
                                help="要更新的渠道")
     update_parser.add_argument("pairs", nargs="+", metavar="KEY=VALUE",
-                               help="要更新的字段，如 FEISHU_APP_ID=cli_new")
+                               help="要更新的字段，如 FEISHU_WEBHOOK_URL=https://...")
     update_parser.add_argument("--test", action="store_true",
                                help="更新后立即测试连接")
     update_parser.add_argument("--save", action="store_true",

@@ -375,7 +375,7 @@ def configure_channels(python_exe, quick=False):
         return
 
     channels = {
-        "1": ("feishu", "飞书", ["FEISHU_APP_ID", "FEISHU_APP_SECRET", "FEISHU_WEBHOOK_URL"]),
+        "1": ("feishu", "飞书", ["FEISHU_WEBHOOK_URL", "FEISHU_BOT_SECRET"]),
         "2": ("dingtalk", "钉钉", ["DINGTALK_APP_KEY", "DINGTALK_APP_SECRET", "DINGTALK_WEBHOOK_URL"]),
         "3": ("wecom", "企业微信", ["WECOM_CORP_ID", "WECOM_AGENT_ID", "WECOM_SECRET"]),
         "4": ("wechat", "微信公众号", ["WECHAT_APP_ID", "WECHAT_APP_SECRET", "WECHAT_TOKEN", "WECHAT_ENCODING_AES_KEY"]),
