@@ -123,6 +123,41 @@ body {
 .feature-name { font-size: 13px; font-weight: 600; color: var(--text); }
 .feature-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
+/* ===== Knowledge Base Architecture ===== */
+.kb-arch { display: flex; flex-direction: column; gap: 10px; }
+.arch-card {
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+}
+.arch-card.arch-cloud {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1px solid #c7d2fe;
+}
+.arch-card.arch-local {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+}
+.arch-icon { font-size: 24px; margin-bottom: 6px; }
+.arch-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.arch-desc { font-size: 12px; color: var(--text); margin-top: 4px; line-height: 1.5; }
+.arch-note {
+  font-size: 11px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.7);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.arch-note strong { color: var(--text); }
+.arch-arrow {
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-muted);
+  margin: -2px 0;
+}
+
 /* ===== QR Code ===== */
 .qr-area {
   text-align: center;
@@ -367,6 +402,26 @@ body {
         <div class="feature-icon">🖥️</div>
         <div class="feature-name">本地管理控制台</div>
         <div class="feature-desc">可视化配置/覆盖度分析</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 知识库架构 -->
+  <div class="section">
+    <div class="section-title">🏛️ 知识库架构</div>
+    <div class="kb-arch">
+      <div class="arch-card arch-cloud">
+        <div class="arch-icon">☁️</div>
+        <div class="arch-title">云端共享库（5 座）</div>
+        <div class="arch-desc">标书法规库 · 标书案例库 · 标书模板库 · 软件开发 · 核工业</div>
+        <div class="arch-note"><strong>由管理员统一维护</strong>，定期补齐法规/案例/模板资料<br>您无需上传任何文件，可直接搜索使用</div>
+      </div>
+      <div class="arch-arrow">⇅</div>
+      <div class="arch-card arch-local">
+        <div class="arch-icon">💻</div>
+        <div class="arch-title">本地私有库（6 个）</div>
+        <div class="arch-desc">公司资质 · 人员信息 · 业绩案例 · 报价方案 · 标书模板 · 技术方案</div>
+        <div class="arch-note"><strong>您的私有文件存放区</strong>，完全保存在本机<br>可自行上传补充，安全保密、不上云</div>
       </div>
     </div>
   </div>

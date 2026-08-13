@@ -338,10 +338,10 @@ def analyze_coverage():
     suggestions = []
     for kb in report["shared_kbs"]:
         if kb["status"] == "critical":
-            suggestions.append(f"🔴 【{kb['name']}】完全没有文件，请上传：{', '.join(kb['suggested_uploads'][:2])}")
+            suggestions.append(f"🔴 【{kb['name']}】云端资料缺失（管理员统一维护，待补齐）：{', '.join(kb['suggested_uploads'][:2])}")
         elif kb["status"] == "warning":
             missing = [f["name"] for f in kb["files"] if not f["exists"]]
-            suggestions.append(f"🟡 【{kb['name']}】缺少 {len(missing)} 个文件：{', '.join(missing)}")
+            suggestions.append(f"🟡 【{kb['name']}】云端资料待管理员补齐：{', '.join(missing)}")
 
     for db in report["local_dbs"]:
         if db["status"] == "empty":
@@ -608,7 +608,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); }
         <div class="upload-zone" id="upload-zone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('file-input').click()">
           <div class="upload-icon">📎</div>
           <div class="upload-text">拖拽文件到此处，或点击选择文件</div>
-          <div class="upload-hint">文件将上传到：<span class="upload-target" id="upload-target">seeds/</span></div>
+          <div class="upload-hint">文件将上传到：<span class="upload-target" id="upload-target">seeds/（管理员维护）</span></div>
           <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
             <span style="background:#F1F5F9;padding:2px 8px;border-radius:4px;font-size:11px;color:var(--text-muted);">.md</span>
             <span style="background:#F1F5F9;padding:2px 8px;border-radius:4px;font-size:11px;color:var(--text-muted);">.txt</span>
@@ -762,7 +762,7 @@ function renderCoverage() {
   }
 
   // 共享知识库
-  html += '<div class="card"><div class="card-header"><div class="card-title">📚 共享知识库（' + d.shared_kbs.length + '座）</div></div><div class="card-body">';
+  html += '<div class="card"><div class="card-header"><div class="card-title">📚 共享知识库（' + d.shared_kbs.length + '座 · 管理员统一维护）</div></div><div class="card-body">';
   html += '<div class="kb-grid">';
   d.shared_kbs.forEach(kb => {
     const statusMap = {good: '已覆盖', warning: '部分覆盖', critical: '严重缺失'};
@@ -777,7 +777,7 @@ function renderCoverage() {
     });
     html += '</ul></div>';
     if (kb.status !== 'good') {
-      html += '<div class="suggestion-list"><div class="suggestion-list-title">📌 建议上传</div><ul>';
+      html += '<div class="suggestion-list"><div class="suggestion-list-title">📌 管理员待补齐</div><ul>';
       kb.suggested_uploads.forEach(s => { html += '<li>' + s + '</li>'; });
       html += '</ul></div>';
     }
@@ -786,7 +786,7 @@ function renderCoverage() {
   html += '</div></div></div>';
 
   // 本地数据库
-  html += '<div class="card"><div class="card-header"><div class="card-title">📁 本地知识库（' + d.local_dbs.length + '个）</div></div><div class="card-body">';
+  html += '<div class="card"><div class="card-header"><div class="card-title">📁 本地知识库（' + d.local_dbs.length + '个 · 您的私有文件区）</div></div><div class="card-body">';
   html += '<div class="kb-grid">';
   d.local_dbs.forEach(db => {
     const statusMap = {good: '已配置', empty: '未配置'};
@@ -850,9 +850,9 @@ async function loadFileList() {
 
   const selector = document.getElementById('target-selector');
   let html = '';
-  // 共享知识库 seeds 目录
-  html += '<div class="target-chip active" onclick="selectTarget(this, \'seeds\')"><span>📚</span> 共享知识库(seeds/) <span class="count">' + coverageData.shared_kbs.reduce((a, k) => a + k.file_count, 0) + '</span></div>';
-  // 本地数据库
+  // 共享知识库 seeds 目录（管理员维护，普通用户无需上传）
+  html += '<div class="target-chip active" onclick="selectTarget(this, \'seeds\')"><span>📚</span> 共享知识库(seeds/·管理员) <span class="count">' + coverageData.shared_kbs.reduce((a, k) => a + k.file_count, 0) + '</span></div>';
+  // 本地数据库（您的私有文件区，可自由上传）
   coverageData.local_dbs.forEach(db => {
     const dirName = db.path.split(/[\\/]/).pop();
     const relPath = db.path.replace(/\\/g, '/').split('/').slice(-2).join('/');
@@ -1328,12 +1328,12 @@ def main():
         print(f"  严重缺失: {report['summary']['critical_gaps']} 个")
         print(f"  总缺口数: {report['summary']['total_gaps']} 个")
 
-        print(f"\n📚 共享知识库 ({len(report['shared_kbs'])} 座):")
+        print(f"\n📚 共享知识库 ({len(report['shared_kbs'])} 座，管理员统一维护):")
         for kb in report["shared_kbs"]:
             status_icon = {"good": "✅", "warning": "🟡", "critical": "🔴"}[kb["status"]]
             print(f"  {status_icon} {kb['name']}: {kb['file_count']}/{kb['total_expected']} 个文件")
             if kb["status"] != "good":
-                print(f"     建议上传: {', '.join(kb['suggested_uploads'][:2])}")
+                print(f"     待管理员补齐: {', '.join(kb['suggested_uploads'][:2])}")
 
         print(f"\n📁 本地知识库 ({len(report['local_dbs'])} 个):")
         for db in report["local_dbs"]:
