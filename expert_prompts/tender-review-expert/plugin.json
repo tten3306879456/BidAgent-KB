@@ -41,6 +41,6 @@
     { "en": "Audit this requirements checklist for hidden risks, ambiguous clauses, exclusionary conditions, and compliance issues.",
       "zh": "审核这份要点清单，找出隐藏风险、模糊条款、排他性条件和合规问题。" },
     { "en": "Check if all disqualification clauses are identified and match them against the disqualification pattern library.",
-      "zh": "检查废标条款是否全部识别，并匹配废标条款模式库。" }
+      "zh": "检查废标条款是否全部识别，并匹配云端标书案例库废标模式。" }
   ]
 }
