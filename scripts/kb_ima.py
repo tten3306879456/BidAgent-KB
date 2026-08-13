@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ima 云端知识库后端 (v2.0 — 支持 5 座共享知识库)
+ima 云端知识库后端 (v2.1 — 支持 6 座共享知识库)
 
 工作模式:
   1. WorkBuddy 内运行: 通过 ima-mcp 工具操作（create_media/add_knowledge/search_knowledge等）
@@ -18,7 +18,8 @@ ima 云端知识库后端 (v2.0 — 支持 5 座共享知识库)
     "标书案例库": "7493174285050353",
     "投标文件编辑模板库": "7493174465429392",
     "nuclear_industry": "7493159651146811",
-    "software_development": "7493159953137267"
+    "software_development": "7493159953137267",
+    "equipment_procurement": "7493501189104652"
   }
   backend.ima.public_kb_id  = ""  (兼容旧配置，不再主要使用)
   backend.ima.private_kb_id = ""  (兼容旧配置，不再主要使用)
@@ -46,7 +47,7 @@ class ImaBackend(KBBackend):
                 - private_kb_id: str          (兼容旧配置)
             full_config: 完整配置（用于读取 shared_content.categories 做文件→KB 映射）
         """
-        # 5 座共享知识库: {名称: KB_ID}
+        # 6 座共享知识库: {名称: KB_ID}
         self.shared_kbs: dict = config.get("shared_kbs", {})
 
         # 兼容旧配置
