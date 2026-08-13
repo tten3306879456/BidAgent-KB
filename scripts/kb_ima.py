@@ -17,9 +17,9 @@ ima 云端知识库后端 (v2.1 — 支持 6 座共享知识库)
     "标书法规库": "7493174142445773",
     "标书案例库": "7493174285050353",
     "投标文件编辑模板库": "7493174465429392",
-    "nuclear_industry": "7493159651146811",
-    "software_development": "7493159953137267",
-    "equipment_procurement": "7493501189104652"
+    "核工业标书知识库": "7493159651146811",
+    "软件开发标书知识库": "7493159953137267",
+    "设备采购知识库": "7493501189104652"
   }
   backend.ima.public_kb_id  = ""  (兼容旧配置，不再主要使用)
   backend.ima.private_kb_id = ""  (兼容旧配置，不再主要使用)
@@ -34,7 +34,7 @@ from kb_backend import KBBackend
 
 
 class ImaBackend(KBBackend):
-    """ima 云端知识库后端 (v2.0 — 多 KB 路由)"""
+    """ima 云端知识库后端 (v2.1 — 6 座共享知识库多 KB 路由)"""
 
     backend_name = "ima"
 
@@ -393,7 +393,7 @@ class ImaBackend(KBBackend):
 
 
 if __name__ == "__main__":
-    print("=== ima 后端 v2.0 自测 ===\n")
+    print("=== ima 后端 v2.1 自测 ===\n")
 
     # 测试无配置的情况
     backend = ImaBackend({"shared_kbs": {}, "public_kb_id": "", "private_kb_id": ""})
@@ -406,8 +406,9 @@ if __name__ == "__main__":
             "标书法规库": "7493174142445773",
             "标书案例库": "7493174285050353",
             "投标文件编辑模板库": "7493174465429392",
-            "nuclear_industry": "7493159651146811",
-            "software_development": "7493159953137267",
+            "核工业标书知识库": "7493159651146811",
+            "软件开发标书知识库": "7493159953137267",
+            "设备采购知识库": "7493501189104652",
         },
         "public_kb_id": "",
         "private_kb_id": "",

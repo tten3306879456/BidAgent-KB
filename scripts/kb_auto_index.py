@@ -7,7 +7,7 @@
 
 功能:
   1. 提取 PDF/Word/TXT 文件文本内容
-  2. 自动分类到 5 个知识库类别之一
+  2. 自动分类到 6 个知识库类别之一
   3. 提取标准编号、标题、适用范围等元数据
   4. 生成结构化摘要条目（含标书响应要点）
   5. 自动追加到对应的本地 .md 种子文件
@@ -441,7 +441,7 @@ class KnowledgeBaseAutoIndexer:
         print(f"--- 摘要条目结束 ---\n")
 
     def _gen_standard_summary(self):
-        """行业技术标准库模板"""
+        """行业知识库模板（按行业分类）"""
         sn = self.metadata.get("standard_number", "")
         title = self.metadata.get("title", self.file_name)
         scope = self.metadata.get("scope", "涉及该标准技术领域的项目设计")
@@ -505,7 +505,7 @@ class KnowledgeBaseAutoIndexer:
 > 📄 完整法规原文已上传至 ima 知识库，文件名: {self.file_name}"""
 
     def _gen_pattern_summary(self):
-        """废标条款模式库模板"""
+        """废标案例与风险模式库模板"""
         title = self.metadata.get("title", self.file_name)
         return f"""### {title}
 
@@ -518,7 +518,7 @@ class KnowledgeBaseAutoIndexer:
 > 📄 完整文件已上传至 ima 知识库，文件名: {self.file_name}"""
 
     def _gen_commerce_summary(self):
-        """报价与商务法规库模板"""
+        """报价与商务法规模板（标书法规库专题）"""
         title = self.metadata.get("title", self.file_name)
         scope = self.metadata.get("scope", "招投标报价与商务条款相关要求")
 
@@ -533,7 +533,7 @@ class KnowledgeBaseAutoIndexer:
 > 📄 完整文件已上传至 ima 知识库，文件名: {self.file_name}"""
 
     def _gen_qualification_summary(self):
-        """资质等效替代规则库模板"""
+        """资质等效替代规则模板（标书案例库专题）"""
         title = self.metadata.get("title", self.file_name)
         return f"""### {title}
 

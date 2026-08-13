@@ -37,7 +37,7 @@ from pathlib import Path
 def _load_config():
     """加载配置文件，支持多种查找路径
 
-    v2.0: 从 backend.ima.shared_kbs 读取 5 座共享知识库 ID 映射
+    v2.0: 从 backend.ima.shared_kbs 读取 6 座共享知识库 ID 映射
     """
     search_paths = [
         Path(__file__).parent / "kb_config.json",           # 脚本同目录
